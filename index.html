@@ -204,7 +204,7 @@
                 <h2 class="text-2xl font-bold mb-4 flex items-center">🏆 グループ別 来訪者TOP5</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="tifo-card">
-                        <h3 class="text-lg font-bold text-stone-600 mb-4">� 年代</h3>
+                        <h3 class="text-lg font-bold text-stone-600 mb-4">🎂 年代</h3>
                         <ul id="age-ranking" class="space-y-3"></ul>
                     </div>
                     <div class="tifo-card">
@@ -279,7 +279,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadData() {
         try {
             // CORRECTED FILENAME
-            const response = await fetch('milii_score.csv');
+            const response = await fetch('milli_score.csv');
             if (!response.ok) {
                 throw new Error(`CSV file not found or failed to load: ${response.status} ${response.statusText}`);
             }
@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         } catch (error) {
             console.error("Error loading or parsing CSV:", error);
-            loadingMessage.innerHTML = `<p class="text-red-500 font-bold">エラー: データファイルの読み込みに失敗しました。</p><p class="text-sm mt-2">ファイル名が 'milii_score.csv' であること、<br>index.html と同じ場所にあることを確認してください。</p>`;
+            loadingMessage.innerHTML = `<p class="text-red-500 font-bold">エラー: データファイルの読み込みに失敗しました。</p><p class="text-sm mt-2">ファイル名が 'milli_score.csv' であること、<br>index.html と同じ場所にあることを確認してください。</p>`;
         }
     }
 
@@ -423,4 +423,3 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 </body>
 </html>
-�
