@@ -245,9 +245,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // --- CSV Parsing Function ---
     function parseCSV(text) {
-        if (text.charCodeAt(0) === 0xFEFF) {
-            text = text.slice(1);
-        }
         const lines = text.trim().split(/\r?\n/);
         
         const regex = /(".*?"|[^,]+)(?=\s*,|\s*$)/g;
@@ -261,7 +258,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             return header;
         });
 
-        // **FINAL FIX**: Store the first header key, whatever it is.
         if (headers.length > 0) {
             facilityHeaderKey = headers[0];
         } else {
@@ -296,7 +292,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            const csvText = await response.text();
+            // **FINAL FIX for MOJIBAKE**: Read as ArrayBuffer and decode with Shift_JIS
+            const arrayBuffer = await response.arrayBuffer();
+            const decoder = new TextDecoder('shift-jis');
+            const csvText = decoder.decode(arrayBuffer);
+            
             const parsedData = parseCSV(csvText);
 
             // Filter out rows where the facility name is invalid
