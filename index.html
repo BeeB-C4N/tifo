@@ -272,21 +272,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Data Loading ---
     async function loadData() {
         try {
-            // Explicitly set the path to be relative to the current directory
             const response = await fetch('./milli_score.csv');
             
-            // Check if the fetch was successful
             if (!response.ok) {
-                // Log the detailed response and throw an error to be caught below
                 console.error("Fetch failed with status:", response.status, response.statusText);
                 const responseText = await response.text();
-                console.error("Response body:", responseText); // Log the body (e.g., "404: Not Found")
+                console.error("Response body:", responseText);
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
             const csvText = await response.text();
-            surveyData = parseCSV(csvText);
+            const parsedData = parseCSV(csvText);
+
+            // **ERROR FIX**: Filter out rows where '施設' is not a valid string before sorting
+            surveyData = parsedData.filter(row => row && typeof row.施設 === 'string' && row.施設.trim() !== '');
             
+            // Now it's safe to sort
             surveyData.sort((a, b) => a.施設.localeCompare(b.施設));
 
             surveyData.forEach(data => {
