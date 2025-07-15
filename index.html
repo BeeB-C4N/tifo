@@ -102,10 +102,10 @@
 
     <!-- ホーム画面 -->
     <div id="home-screen" class="min-h-screen flex flex-col items-center justify-center p-4 text-center">
-        <div class="w-20 h-20 mb-4">
+        <div class="w-24 h-24 mb-4">
             <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
                 <path fill="#FFB347" d="M47.9,-51.9C62.4,-41.2,74.7,-25.9,78.2,-8.1C81.7,9.7,76.4,30.1,64.8,44.2C53.2,58.3,35.3,66.1,17.7,70.8C0.1,75.5,-17.2,77.1,-33.1,70.2C-49,63.3,-63.5,47.9,-71.4,30.1C-79.3,12.3,-80.6,-7.8,-74.3,-24.1C-68,-40.4,-54.1,-52.9,-38.8,-60.1C-23.5,-67.3,-6.8,-69.2,8.9,-66.1C24.6,-63,47.9,-51.9,47.9,-51.9Z" transform="translate(100 100)" />
-                <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-size="90" font-weight="bold" fill="white">T</text>
+                <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-size="50" font-weight="bold" fill="white" letter-spacing="2">TIFO</text>
             </svg>
         </div>
         <h1 class="text-4xl font-bold mb-2">TIFO</h1>
@@ -204,7 +204,7 @@
                 <h2 class="text-2xl font-bold mb-4 flex items-center">🏆 グループ別 来訪者TOP5</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="tifo-card">
-                        <h3 class="text-lg font-bold text-stone-600 mb-4">🎂 年代</h3>
+                        <h3 class="text-lg font-bold text-stone-600 mb-4">� 年代</h3>
                         <ul id="age-ranking" class="space-y-3"></ul>
                     </div>
                     <div class="tifo-card">
@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // --- CSV Parsing Function ---
     function parseCSV(text) {
-        // Handle potential UTF-8 BOM
+        // Handle potential UTF-8 BOM at the start of the file
         if (text.charCodeAt(0) === 0xFEFF) {
             text = text.slice(1);
         }
@@ -252,10 +252,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const headers = lines[0].split(',').map(h => h.trim());
         
         return lines.slice(1).map(line => {
-            const values = line.split(',').map(v => v.trim());
+            // This regex handles commas inside quoted fields
+            const values = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
             const obj = {};
             headers.forEach((header, i) => {
-                const value = values[i];
+                let value = (values[i] || '').trim();
+                // Remove quotes if value is quoted
+                if (value.startsWith('"') && value.endsWith('"')) {
+                    value = value.slice(1, -1);
+                }
+
                 // Try to convert to number if it's a valid numeric string
                 const numValue = Number(value);
                 if (value !== '' && !isNaN(numValue)) {
@@ -272,14 +278,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Data Loading ---
     async function loadData() {
         try {
-            const response = await fetch('milli_score.csv');
+            // CORRECTED FILENAME
+            const response = await fetch('milii_score.csv');
             if (!response.ok) {
-                throw new Error(`CSV file not found or failed to load: ${response.statusText}`);
+                throw new Error(`CSV file not found or failed to load: ${response.status} ${response.statusText}`);
             }
             const csvText = await response.text();
             surveyData = parseCSV(csvText);
             
             // --- Initial Setup after data load ---
+            // Sort data by facility name for consistent dropdown order
+            surveyData.sort((a, b) => a.施設.localeCompare(b.施設));
+
             surveyData.forEach(data => {
                 const option = document.createElement('option');
                 option.value = data.施設;
@@ -292,7 +302,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         } catch (error) {
             console.error("Error loading or parsing CSV:", error);
-            loadingMessage.textContent = 'エラー: データファイルの読み込みに失敗しました。';
+            loadingMessage.innerHTML = `<p class="text-red-500 font-bold">エラー: データファイルの読み込みに失敗しました。</p><p class="text-sm mt-2">ファイル名が 'milii_score.csv' であること、<br>index.html と同じ場所にあることを確認してください。</p>`;
         }
     }
 
@@ -368,7 +378,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('total-answers').textContent = data.全回答数 ?? 'N/A';
         const trendEl = document.getElementById('answer-trend');
         const trend = data['伸び率（対前月）'];
-        if (trend > 0) {
+        if (trend === null || trend === undefined) {
+             trendEl.innerHTML = `▶️ <span class="text-gray-600 font-bold ml-1">前月比 N/A</span>`;
+        } else if (trend > 0) {
             trendEl.innerHTML = `🔼 <span class="text-green-600 font-bold ml-1">前月比 +${(trend * 100).toFixed(1)}%</span>`;
         } else if (trend < 0) {
             trendEl.innerHTML = `🔽 <span class="text-red-600 font-bold ml-1">前月比 ${(trend * 100).toFixed(1)}%</span>`;
@@ -411,3 +423,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 </body>
 </html>
+�
