@@ -108,7 +108,6 @@
                 <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-size="50" font-weight="bold" fill="white" letter-spacing="2">TIFO</text>
             </svg>
         </div>
-        <h1 class="text-4xl font-bold mb-2">TIFO</h1>
         <p class="text-lg text-stone-600 mb-8">観光AIアドバイザリー</p>
         
         <div id="loading-message" class="text-stone-600">
@@ -243,20 +242,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     const mainContent = document.getElementById('main-content');
     
     // --- CSV Parsing Function ---
-    function parseData(text) {
+    function parseCSV(text) {
         if (text.charCodeAt(0) === 0xFEFF) {
             text = text.slice(1);
         }
         const lines = text.trim().split(/\r?\n/);
-        // **ERROR FIX**: Use Tab as a delimiter
-        const headers = lines[0].split('\t').map(h => h.trim());
         
+        // **FINAL FIX**: Use robust regex for both headers and data rows
+        const regex = /(".*?"|[^,]+)(?=\s*,|\s*$)/g;
+        
+        // Parse headers robustly
+        const headerLine = lines[0];
+        const headers = (headerLine.match(regex) || []).map(h => {
+            let header = h.trim();
+            if (header.startsWith('"') && header.endsWith('"')) {
+                header = header.slice(1, -1);
+            }
+            return header;
+        });
+
+        // Parse data rows robustly
         return lines.slice(1).map(line => {
-            // **ERROR FIX**: Use Tab as a delimiter
-            const values = line.split('\t');
+            const values = line.match(regex) || [];
             const obj = {};
             headers.forEach((header, i) => {
                 let value = (values[i] || '').trim();
+                if (value.startsWith('"') && value.endsWith('"')) {
+                    value = value.slice(1, -1);
+                }
                 const numValue = Number(value);
                 if (value !== '' && !isNaN(numValue)) {
                     obj[header] = numValue;
@@ -281,7 +294,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             const csvText = await response.text();
-            const parsedData = parseData(csvText);
+            const parsedData = parseCSV(csvText);
 
             // Filter out rows where '施設' is not a valid string before sorting
             surveyData = parsedData.filter(row => row && typeof row.施設 === 'string' && row.施設.trim() !== '');
