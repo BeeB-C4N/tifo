@@ -244,7 +244,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // --- CSV Parsing Function ---
     function parseCSV(text) {
-        // Handle potential UTF-8 BOM at the start of the file
         if (text.charCodeAt(0) === 0xFEFF) {
             text = text.slice(1);
         }
@@ -252,22 +251,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const headers = lines[0].split(',').map(h => h.trim());
         
         return lines.slice(1).map(line => {
-            // This regex handles commas inside quoted fields
             const values = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
             const obj = {};
             headers.forEach((header, i) => {
                 let value = (values[i] || '').trim();
-                // Remove quotes if value is quoted
                 if (value.startsWith('"') && value.endsWith('"')) {
                     value = value.slice(1, -1);
                 }
-
-                // Try to convert to number if it's a valid numeric string
                 const numValue = Number(value);
                 if (value !== '' && !isNaN(numValue)) {
                     obj[header] = numValue;
                 } else {
-                    // Keep as string, or null if empty
                     obj[header] = value === '' ? null : value;
                 }
             });
@@ -278,16 +272,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Data Loading ---
     async function loadData() {
         try {
-            // CORRECTED FILENAME
-            const response = await fetch('milli_score.csv');
+            // Explicitly set the path to be relative to the current directory
+            const response = await fetch('./milli_score.csv');
+            
+            // Check if the fetch was successful
             if (!response.ok) {
-                throw new Error(`CSV file not found or failed to load: ${response.status} ${response.statusText}`);
+                // Log the detailed response and throw an error to be caught below
+                console.error("Fetch failed with status:", response.status, response.statusText);
+                const responseText = await response.text();
+                console.error("Response body:", responseText); // Log the body (e.g., "404: Not Found")
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+            
             const csvText = await response.text();
             surveyData = parseCSV(csvText);
             
-            // --- Initial Setup after data load ---
-            // Sort data by facility name for consistent dropdown order
             surveyData.sort((a, b) => a.施設.localeCompare(b.施設));
 
             surveyData.forEach(data => {
@@ -301,8 +300,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             mainContent.classList.remove('hidden');
 
         } catch (error) {
-            console.error("Error loading or parsing CSV:", error);
-            loadingMessage.innerHTML = `<p class="text-red-500 font-bold">エラー: データファイルの読み込みに失敗しました。</p><p class="text-sm mt-2">ファイル名が 'milli_score.csv' であること、<br>index.html と同じ場所にあることを確認してください。</p>`;
+            console.error("Full error object:", error);
+            loadingMessage.innerHTML = `<p class="text-red-500 font-bold">エラー: データファイルの読み込みに失敗しました。</p><p class="text-sm mt-2">ブラウザの開発者コンソール（F12キー）で詳細なエラーを確認してください。</p>`;
         }
     }
 
@@ -329,14 +328,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             return { rank: 'N/A', total: surveyData.length };
         }
         const sortedValues = surveyData
-            .map(d => d[dataKey] ?? -Infinity) // Use ?? for nullish coalescing
+            .map(d => d[dataKey] ?? -Infinity)
             .sort((a, b) => b - a);
         const rank = sortedValues.indexOf(value) + 1;
         return { rank, total: surveyData.length };
     }
     
     function updateSatisfactionCard(idPrefix, score, dataKey) {
-        const scoreValue = score ?? 0; // Use 0 if score is null/undefined
+        const scoreValue = score ?? 0;
         document.getElementById(`${idPrefix}`).textContent = scoreValue.toFixed(2);
         document.getElementById(`${idPrefix}-bar`).style.width = `${(scoreValue / 5) * 100}%`;
         const rankInfo = getRank(score, dataKey);
@@ -374,7 +373,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     function displayAnalysis(data) {
         document.getElementById('facility-title').textContent = `${data.施設} の分析結果`;
         
-        // --- Score Cards ---
         document.getElementById('total-answers').textContent = data.全回答数 ?? 'N/A';
         const trendEl = document.getElementById('answer-trend');
         const trend = data['伸び率（対前月）'];
@@ -393,7 +391,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const nps = data.NPS;
         const npsScore = nps !== null ? (nps * 100).toFixed(1) : 'N/A';
         document.getElementById('nps-score').textContent = npsScore;
-        const normalizedNpsPercent = nps !== null ? (nps * 100 + 100) / 2 : 50; // Default to center if no data
+        const normalizedNpsPercent = nps !== null ? (nps * 100 + 100) / 2 : 50;
         document.getElementById('nps-bar-value').style.left = `calc(${normalizedNpsPercent}% - 0.375rem)`;
         const npsRank = getRank(data.NPS, 'NPS');
         document.getElementById('nps-rank').textContent = `(全${npsRank.total}施設中 ${npsRank.rank}位)`;
@@ -402,7 +400,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateSatisfactionCard('facility-satisfaction', data['施設全体満足度'], '施設全体満足度');
         updateSatisfactionCard('trip-satisfaction', data['旅全体満足度'], '旅全体満足度');
 
-        // --- Ranking Lists ---
         const ageGroups = { '10代': data['10代'], '20代': data['20代'], '30代': data['30代'], '40代': data['40代'], '50代': data['50代'], '60代': data['60代'], '70代': data['70代'], '80代': data['80代'] };
         const genderGroups = { '男性': data['男性'], '女性': data['女性'] };
         const stayDurationGroups = { '日帰り': data['日帰り'], '1泊': data['1泊'], '2泊': data['2泊'], '3泊': data['3泊'], '4泊以上': data['4泊以上'] };
