@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIFO - 観光AIアドバイザリー</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #FFFBF5; /* 温かみのあるクリーム色 */
+            color: #5C4033; /* 濃い茶色 */
+        }
+        .tifo-card {
+            background-color: white;
+            border-radius: 1.5rem; /* 角を丸く */
+            padding: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #F3EADF;
+            transition: all 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .tifo-button {
+            background-color: #FFB347; /* 猫のイメージに合うオレンジ */
+            color: white;
+            font-weight: bold;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            border-bottom: 4px solid #E69500;
+            transition: all 0.2s ease;
+        }
+        .tifo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px -3px rgba(255, 179, 71, 0.4);
+        }
+        .tifo-button:active {
+            transform: translateY(2px);
+            border-bottom-width: 2px;
+        }
+        .rank-badge {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+        .rank-1 { background-color: #FFD700; } /* Gold */
+        .rank-2 { background-color: #C0C0C0; } /* Silver */
+        .rank-3 { background-color: #CD7F32; } /* Bronze */
+        .rank-4, .rank-5 { background-color: #A9A9A9; } /* Gray */
+        .progress-bar-bg {
+            background-color: #F3EADF;
+            border-radius: 9999px;
+            overflow: hidden;
+            height: 0.75rem;
+        }
+        .progress-bar {
+            background-color: #87CEEB; /* 満足度のバーの色 */
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.5s ease-in-out;
+        }
+        .nps-bar-container {
+            position: relative;
+            background: linear-gradient(to right, #FFC0CB, #F3EADF, #98FB98);
+            height: 0.75rem;
+            border-radius: 9999px;
+        }
+        .nps-bar-marker {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 2px;
+            height: 1.25rem;
+            background-color: rgba(92, 64, 51, 0.5);
+            border-radius: 1px;
+        }
+        .nps-bar-value {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0.75rem;
+            height: 0.75rem;
+            background-color: #5C4033;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+            transition: left 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ホーム画面 -->
+    <div id="home-screen" class="min-h-screen flex flex-col items-center justify-center p-4 text-center">
+        <div class="w-20 h-20 mb-4">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#FFB347" d="M47.9,-51.9C62.4,-41.2,74.7,-25.9,78.2,-8.1C81.7,9.7,76.4,30.1,64.8,44.2C53.2,58.3,35.3,66.1,17.7,70.8C0.1,75.5,-17.2,77.1,-33.1,70.2C-49,63.3,-63.5,47.9,-71.4,30.1C-79.3,12.3,-80.6,-7.8,-74.3,-24.1C-68,-40.4,-54.1,-52.9,-38.8,-60.1C-23.5,-67.3,-6.8,-69.2,8.9,-66.1C24.6,-63,47.9,-51.9,47.9,-51.9Z" transform="translate(100 100)" />
+                <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-size="90" font-weight="bold" fill="white">T</text>
+            </svg>
+        </div>
+        <h1 class="text-4xl font-bold mb-2">TIFO</h1>
+        <p class="text-lg text-stone-600 mb-8">観光AIアドバイザリー</p>
+        
+        <div id="loading-message" class="text-stone-600">
+            <p>データを読み込んでいます...</p>
+        </div>
+
+        <div id="main-content" class="w-full max-w-md hidden">
+            <label for="facility-select" class="block mb-2 text-stone-700 font-bold">分析したい施設を選んでにゃん 🐾</label>
+            <select id="facility-select" class="w-full p-3 border border-stone-300 rounded-xl shadow-sm focus:ring-2 focus:ring-orange-400 focus:border-orange-400">
+                <!-- Options are generated by JS -->
+            </select>
+            <button id="analyze-button" class="tifo-button w-full mt-6">データを分析</button>
+        </div>
+    </div>
+
+    <!-- 分析結果画面 -->
+    <div id="analysis-screen" class="hidden p-4 md:p-8 max-w-5xl mx-auto">
+        <header class="flex items-center justify-between mb-8">
+            <h1 id="facility-title" class="text-3xl font-bold text-stone-800"></h1>
+            <button id="back-button" class="tifo-button">戻る</button>
+        </header>
+
+        <main class="space-y-8">
+            <!-- スコアカードセクション -->
+            <section>
+                <h2 class="text-2xl font-bold mb-4 flex items-center">📊 基本スコア</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <!-- 回答数カード -->
+                    <div class="tifo-card text-center">
+                        <h3 class="text-lg font-bold text-stone-600 mb-2">全回答数</h3>
+                        <p id="total-answers" class="text-6xl font-bold text-orange-500"></p>
+                        <div id="answer-trend" class="text-sm mt-2 flex items-center justify-center"></div>
+                        <p id="total-answers-rank" class="text-sm text-stone-500 mt-3"></p>
+                    </div>
+                    <!-- NPSカード -->
+                    <div class="tifo-card text-center">
+                        <h3 class="text-lg font-bold text-stone-600 mb-2">❤️ NPS (顧客推奨度)</h3>
+                         <p id="nps-score" class="text-6xl font-bold text-orange-500"></p>
+                        <p class="text-xs text-stone-500">(-100 ~ 100の範囲)</p>
+                        <div class="w-full mt-3 relative">
+                           <div class="nps-bar-container">
+                               <div class="nps-bar-marker"></div>
+                               <div id="nps-bar-value" class="nps-bar-value"></div>
+                           </div>
+                        </div>
+                        <p id="nps-rank" class="text-sm text-stone-500 mt-3"></p>
+                    </div>
+                </div>
+
+                <h2 class="text-2xl font-bold mb-4 flex items-center">⭐ 各種満足度スコア</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                     <!-- 商品・サービス満足度 -->
+                    <div class="tifo-card text-center">
+                        <h3 class="text-lg font-bold text-stone-600 mb-2">🎁 商品・サービス</h3>
+                        <div class="flex items-baseline justify-center">
+                            <p id="product-satisfaction" class="text-5xl font-bold text-orange-500"></p>
+                            <span class="text-2xl font-bold text-stone-500">/ 5.0</span>
+                        </div>
+                        <div class="w-full progress-bar-bg mt-3">
+                            <div id="product-satisfaction-bar" class="progress-bar"></div>
+                        </div>
+                        <p id="product-satisfaction-rank" class="text-sm text-stone-500 mt-3"></p>
+                    </div>
+                    <!-- 施設全体満足度 -->
+                    <div class="tifo-card text-center">
+                        <h3 class="text-lg font-bold text-stone-600 mb-2">🏨 施設全体</h3>
+                        <div class="flex items-baseline justify-center">
+                            <p id="facility-satisfaction" class="text-5xl font-bold text-orange-500"></p>
+                            <span class="text-2xl font-bold text-stone-500">/ 5.0</span>
+                        </div>
+                        <div class="w-full progress-bar-bg mt-3">
+                            <div id="facility-satisfaction-bar" class="progress-bar"></div>
+                        </div>
+                        <p id="facility-satisfaction-rank" class="text-sm text-stone-500 mt-3"></p>
+                    </div>
+                    <!-- 旅全体満足度 -->
+                    <div class="tifo-card text-center">
+                        <h3 class="text-lg font-bold text-stone-600 mb-2">🚗 旅全体</h3>
+                        <div class="flex items-baseline justify-center">
+                            <p id="trip-satisfaction" class="text-5xl font-bold text-orange-500"></p>
+                            <span class="text-2xl font-bold text-stone-500">/ 5.0</span>
+                        </div>
+                        <div class="w-full progress-bar-bg mt-3">
+                            <div id="trip-satisfaction-bar" class="progress-bar"></div>
+                        </div>
+                        <p id="trip-satisfaction-rank" class="text-sm text-stone-500 mt-3"></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ランキングセクション -->
+            <section>
+                <h2 class="text-2xl font-bold mb-4 flex items-center">🏆 グループ別 来訪者TOP5</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="tifo-card">
+                        <h3 class="text-lg font-bold text-stone-600 mb-4">🎂 年代</h3>
+                        <ul id="age-ranking" class="space-y-3"></ul>
+                    </div>
+                    <div class="tifo-card">
+                        <h3 class="text-lg font-bold text-stone-600 mb-4">🚻 性別</h3>
+                        <ul id="gender-ranking" class="space-y-3"></ul>
+                    </div>
+                    <div class="tifo-card">
+                        <h3 class="text-lg font-bold text-stone-600 mb-4">🌙 宿泊日数</h3>
+                        <ul id="stay-duration-ranking" class="space-y-3"></ul>
+                    </div>
+                    <div class="tifo-card">
+                        <h3 class="text-lg font-bold text-stone-600 mb-4">👥 同伴者</h3>
+                        <ul id="companion-ranking" class="space-y-3"></ul>
+                    </div>
+                    <div class="tifo-card col-span-1 md:col-span-2">
+                        <h3 class="text-lg font-bold text-stone-600 mb-4">✈️ 旅の目的</h3>
+                        <ul id="purpose-ranking" class="space-y-3"></ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    // --- Global state ---
+    let surveyData = [];
+
+    // --- DOM Element Setup ---
+    const homeScreen = document.getElementById('home-screen');
+    const analysisScreen = document.getElementById('analysis-screen');
+    const facilitySelect = document.getElementById('facility-select');
+    const analyzeButton = document.getElementById('analyze-button');
+    const backButton = document.getElementById('back-button');
+    const loadingMessage = document.getElementById('loading-message');
+    const mainContent = document.getElementById('main-content');
+    
+    // --- CSV Parsing Function ---
+    function parseCSV(text) {
+        // Handle potential UTF-8 BOM
+        if (text.charCodeAt(0) === 0xFEFF) {
+            text = text.slice(1);
+        }
+        const lines = text.trim().split(/\r?\n/);
+        const headers = lines[0].split(',').map(h => h.trim());
+        
+        return lines.slice(1).map(line => {
+            const values = line.split(',').map(v => v.trim());
+            const obj = {};
+            headers.forEach((header, i) => {
+                const value = values[i];
+                // Try to convert to number if it's a valid numeric string
+                const numValue = Number(value);
+                if (value !== '' && !isNaN(numValue)) {
+                    obj[header] = numValue;
+                } else {
+                    // Keep as string, or null if empty
+                    obj[header] = value === '' ? null : value;
+                }
+            });
+            return obj;
+        });
+    }
+
+    // --- Data Loading ---
+    async function loadData() {
+        try {
+            const response = await fetch('milli_score.csv');
+            if (!response.ok) {
+                throw new Error(`CSV file not found or failed to load: ${response.statusText}`);
+            }
+            const csvText = await response.text();
+            surveyData = parseCSV(csvText);
+            
+            // --- Initial Setup after data load ---
+            surveyData.forEach(data => {
+                const option = document.createElement('option');
+                option.value = data.施設;
+                option.textContent = data.施設;
+                facilitySelect.appendChild(option);
+            });
+
+            loadingMessage.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+
+        } catch (error) {
+            console.error("Error loading or parsing CSV:", error);
+            loadingMessage.textContent = 'エラー: データファイルの読み込みに失敗しました。';
+        }
+    }
+
+    // --- Event Listeners ---
+    analyzeButton.addEventListener('click', () => {
+        const selectedFacilityName = facilitySelect.value;
+        const facilityData = surveyData.find(d => d.施設 === selectedFacilityName);
+        if (facilityData) {
+            displayAnalysis(facilityData);
+            homeScreen.classList.add('hidden');
+            analysisScreen.classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+    });
+
+    backButton.addEventListener('click', () => {
+        homeScreen.classList.remove('hidden');
+        analysisScreen.classList.add('hidden');
+    });
+
+    // --- Helper Functions ---
+    function getRank(value, dataKey) {
+        if (value === null || value === undefined) {
+            return { rank: 'N/A', total: surveyData.length };
+        }
+        const sortedValues = surveyData
+            .map(d => d[dataKey] ?? -Infinity) // Use ?? for nullish coalescing
+            .sort((a, b) => b - a);
+        const rank = sortedValues.indexOf(value) + 1;
+        return { rank, total: surveyData.length };
+    }
+    
+    function updateSatisfactionCard(idPrefix, score, dataKey) {
+        const scoreValue = score ?? 0; // Use 0 if score is null/undefined
+        document.getElementById(`${idPrefix}`).textContent = scoreValue.toFixed(2);
+        document.getElementById(`${idPrefix}-bar`).style.width = `${(scoreValue / 5) * 100}%`;
+        const rankInfo = getRank(score, dataKey);
+        document.getElementById(`${idPrefix}-rank`).textContent = `(全${rankInfo.total}施設中 ${rankInfo.rank}位)`;
+    }
+    
+    function getTopN(groups, n) {
+        return Object.entries(groups)
+            .filter(([key, value]) => value > 0)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, n);
+    }
+
+    function renderRankingList(elementId, topData) {
+        const listElement = document.getElementById(elementId);
+        listElement.innerHTML = '';
+        if (topData.length === 0) {
+            listElement.innerHTML = '<li class="text-stone-500">該当データなし</li>';
+            return;
+        }
+        topData.forEach(([key, value], index) => {
+            const percentage = (value * 100).toFixed(1);
+            const li = document.createElement('li');
+            li.className = 'flex items-center text-stone-700';
+            li.innerHTML = `
+                <span class="rank-badge rank-${index + 1}">${index + 1}</span>
+                <span class="ml-3 flex-1">${key}</span>
+                <span class="font-bold">${percentage}%</span>
+            `;
+            listElement.appendChild(li);
+        });
+    }
+
+    // --- Main Display Function ---
+    function displayAnalysis(data) {
+        document.getElementById('facility-title').textContent = `${data.施設} の分析結果`;
+        
+        // --- Score Cards ---
+        document.getElementById('total-answers').textContent = data.全回答数 ?? 'N/A';
+        const trendEl = document.getElementById('answer-trend');
+        const trend = data['伸び率（対前月）'];
+        if (trend > 0) {
+            trendEl.innerHTML = `🔼 <span class="text-green-600 font-bold ml-1">前月比 +${(trend * 100).toFixed(1)}%</span>`;
+        } else if (trend < 0) {
+            trendEl.innerHTML = `🔽 <span class="text-red-600 font-bold ml-1">前月比 ${(trend * 100).toFixed(1)}%</span>`;
+        } else {
+            trendEl.innerHTML = `▶️ <span class="text-gray-600 font-bold ml-1">前月比 ±0%</span>`;
+        }
+        const answersRank = getRank(data.全回答数, '全回答数');
+        document.getElementById('total-answers-rank').textContent = `(全${answersRank.total}施設中 ${answersRank.rank}位)`;
+
+        const nps = data.NPS;
+        const npsScore = nps !== null ? (nps * 100).toFixed(1) : 'N/A';
+        document.getElementById('nps-score').textContent = npsScore;
+        const normalizedNpsPercent = nps !== null ? (nps * 100 + 100) / 2 : 50; // Default to center if no data
+        document.getElementById('nps-bar-value').style.left = `calc(${normalizedNpsPercent}% - 0.375rem)`;
+        const npsRank = getRank(data.NPS, 'NPS');
+        document.getElementById('nps-rank').textContent = `(全${npsRank.total}施設中 ${npsRank.rank}位)`;
+
+        updateSatisfactionCard('product-satisfaction', data['商品・サービス満足度'], '商品・サービス満足度');
+        updateSatisfactionCard('facility-satisfaction', data['施設全体満足度'], '施設全体満足度');
+        updateSatisfactionCard('trip-satisfaction', data['旅全体満足度'], '旅全体満足度');
+
+        // --- Ranking Lists ---
+        const ageGroups = { '10代': data['10代'], '20代': data['20代'], '30代': data['30代'], '40代': data['40代'], '50代': data['50代'], '60代': data['60代'], '70代': data['70代'], '80代': data['80代'] };
+        const genderGroups = { '男性': data['男性'], '女性': data['女性'] };
+        const stayDurationGroups = { '日帰り': data['日帰り'], '1泊': data['1泊'], '2泊': data['2泊'], '3泊': data['3泊'], '4泊以上': data['4泊以上'] };
+        const companionGroups = { 'ひとり旅': data['自分ひとり'], '恋人と': data['恋人'], '友人と': data['友人'], '夫婦2人': data['夫婦2人'], '団体旅行': data['団体旅行'], '親戚と': data['親戚'], '親と': data['親'], '職場の同僚と': data['職場の同僚'], '家族(小学生以下)': data['小学生以下連れの家族'], '家族(中学生)': data['中学生以下連れの家族'], '家族(高校生)': data['高校生連れの家族'] };
+        const purposeGroups = { '宿でのんびり': data['宿でのんびり過ごす'], '温泉': data['温泉や露天風呂'], 'グルメ': data['地元の美味しいものを食べる'], '自然鑑賞': data['花見や紅葉などの自然鑑賞'], '名所・旧跡観光': data['名所、旧跡の観光'], 'テーマパーク': data['テーマパーク（遊園地、動物園、博物館など）'], '買い物': data['買い物、アウトレット'], 'イベント': data['お祭りやイベントへの参加・見物'], '鑑賞': data['スポーツ観戦や芸能鑑賞（コンサート等）'], 'アウトドア': data['アウトドア（海水浴、釣り、登山など）'], 'まちあるき': data['まちあるき、都市散策'], '体験': data['各種体験（手作り、果物狩りなど）'], 'スポーツ': data['スキー・スノボ、マリンスポーツ'] || data['その他スポーツ（ゴルフ、テニスなど）'], 'ドライブ': data['ドライブ・ツーリング'], '知人訪問': data['友人・親戚を尋ねる'], '仕事関係': data['出張など仕事関係'] };
+
+        renderRankingList('age-ranking', getTopN(ageGroups, 5));
+        renderRankingList('gender-ranking', getTopN(genderGroups, 5));
+        renderRankingList('stay-duration-ranking', getTopN(stayDurationGroups, 5));
+        renderRankingList('companion-ranking', getTopN(companionGroups, 5));
+        renderRankingList('purpose-ranking', getTopN(purposeGroups, 5));
+    }
+
+    // --- Start the application ---
+    loadData();
+});
+</script>
+
+</body>
+</html>
