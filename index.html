@@ -108,6 +108,7 @@
                 <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-size="50" font-weight="bold" fill="white" letter-spacing="2">TIFO</text>
             </svg>
         </div>
+        <h1 class="text-4xl font-bold mb-2">TIFO</h1>
         <p class="text-lg text-stone-600 mb-8">観光AIアドバイザリー</p>
         
         <div id="loading-message" class="text-stone-600">
@@ -231,6 +232,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // --- Global state ---
     let surveyData = [];
+    let facilityHeaderKey = ''; // To store the actual header key for the facility name
 
     // --- DOM Element Setup ---
     const homeScreen = document.getElementById('home-screen');
@@ -248,10 +250,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         const lines = text.trim().split(/\r?\n/);
         
-        // **FINAL FIX**: Use robust regex for both headers and data rows
         const regex = /(".*?"|[^,]+)(?=\s*,|\s*$)/g;
         
-        // Parse headers robustly
         const headerLine = lines[0];
         const headers = (headerLine.match(regex) || []).map(h => {
             let header = h.trim();
@@ -261,7 +261,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             return header;
         });
 
-        // Parse data rows robustly
+        // **FINAL FIX**: Store the first header key, whatever it is.
+        if (headers.length > 0) {
+            facilityHeaderKey = headers[0];
+        } else {
+            throw new Error("CSV has no headers or is improperly formatted.");
+        }
+
         return lines.slice(1).map(line => {
             const values = line.match(regex) || [];
             const obj = {};
@@ -287,25 +293,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             const response = await fetch('./milli_score.csv');
             
             if (!response.ok) {
-                console.error("Fetch failed with status:", response.status, response.statusText);
-                const responseText = await response.text();
-                console.error("Response body:", responseText);
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
             const csvText = await response.text();
             const parsedData = parseCSV(csvText);
 
-            // Filter out rows where '施設' is not a valid string before sorting
-            surveyData = parsedData.filter(row => row && typeof row.施設 === 'string' && row.施設.trim() !== '');
+            // Filter out rows where the facility name is invalid
+            surveyData = parsedData.filter(row => row && typeof row[facilityHeaderKey] === 'string' && row[facilityHeaderKey].trim() !== '');
             
-            // Now it's safe to sort
-            surveyData.sort((a, b) => a.施設.localeCompare(b.施設));
+            // Sort using the dynamic facility header key
+            surveyData.sort((a, b) => a[facilityHeaderKey].localeCompare(b[facilityHeaderKey]));
+
+            if (surveyData.length === 0) {
+                 throw new Error("No valid data rows found after parsing and filtering.");
+            }
 
             surveyData.forEach(data => {
                 const option = document.createElement('option');
-                option.value = data.施設;
-                option.textContent = data.施設;
+                option.value = data[facilityHeaderKey];
+                option.textContent = data[facilityHeaderKey];
                 facilitySelect.appendChild(option);
             });
 
@@ -321,7 +328,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Event Listeners ---
     analyzeButton.addEventListener('click', () => {
         const selectedFacilityName = facilitySelect.value;
-        const facilityData = surveyData.find(d => d.施設 === selectedFacilityName);
+        const facilityData = surveyData.find(d => d[facilityHeaderKey] === selectedFacilityName);
         if (facilityData) {
             displayAnalysis(facilityData);
             homeScreen.classList.add('hidden');
@@ -357,7 +364,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     function getTopN(groups, n) {
         return Object.entries(groups)
-            .filter(([key, value]) => value > 0)
+            .filter(([key, value]) => value > 0 && key !== 'null')
             .sort(([, a], [, b]) => b - a)
             .slice(0, n);
     }
@@ -384,9 +391,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Main Display Function ---
     function displayAnalysis(data) {
-        document.getElementById('facility-title').textContent = `${data.施設} の分析結果`;
+        document.getElementById('facility-title').textContent = `${data[facilityHeaderKey]} の分析結果`;
         
-        document.getElementById('total-answers').textContent = data.全回答数 ?? 'N/A';
+        document.getElementById('total-answers').textContent = data['全回答数'] ?? 'N/A';
         const trendEl = document.getElementById('answer-trend');
         const trend = data['伸び率（対前月）'];
         if (trend === null || trend === undefined) {
@@ -398,7 +405,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             trendEl.innerHTML = `▶️ <span class="text-gray-600 font-bold ml-1">前月比 ±0%</span>`;
         }
-        const answersRank = getRank(data.全回答数, '全回答数');
+        const answersRank = getRank(data['全回答数'], '全回答数');
         document.getElementById('total-answers-rank').textContent = `(全${answersRank.total}施設中 ${answersRank.rank}位)`;
 
         const nps = data.NPS;
