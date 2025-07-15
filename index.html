@@ -243,21 +243,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const mainContent = document.getElementById('main-content');
     
     // --- CSV Parsing Function ---
-    function parseCSV(text) {
+    function parseData(text) {
         if (text.charCodeAt(0) === 0xFEFF) {
             text = text.slice(1);
         }
         const lines = text.trim().split(/\r?\n/);
-        const headers = lines[0].split(',').map(h => h.trim());
+        // **ERROR FIX**: Use Tab as a delimiter
+        const headers = lines[0].split('\t').map(h => h.trim());
         
         return lines.slice(1).map(line => {
-            const values = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
+            // **ERROR FIX**: Use Tab as a delimiter
+            const values = line.split('\t');
             const obj = {};
             headers.forEach((header, i) => {
                 let value = (values[i] || '').trim();
-                if (value.startsWith('"') && value.endsWith('"')) {
-                    value = value.slice(1, -1);
-                }
                 const numValue = Number(value);
                 if (value !== '' && !isNaN(numValue)) {
                     obj[header] = numValue;
@@ -282,9 +281,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             const csvText = await response.text();
-            const parsedData = parseCSV(csvText);
+            const parsedData = parseData(csvText);
 
-            // **ERROR FIX**: Filter out rows where '施設' is not a valid string before sorting
+            // Filter out rows where '施設' is not a valid string before sorting
             surveyData = parsedData.filter(row => row && typeof row.施設 === 'string' && row.施設.trim() !== '');
             
             // Now it's safe to sort
