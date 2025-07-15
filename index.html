@@ -108,7 +108,6 @@
                 <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-size="50" font-weight="bold" fill="white" letter-spacing="2">TIFO</text>
             </svg>
         </div>
-        <h1 class="text-4xl font-bold mb-2">TIFO</h1>
         <p class="text-lg text-stone-600 mb-8">観光AIアドバイザリー</p>
         
         <div id="loading-message" class="text-stone-600">
@@ -204,19 +203,19 @@
                 <h2 class="text-2xl font-bold mb-4 flex items-center">🏆 グループ別 来訪者TOP5</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="tifo-card">
-                        <h3 class="text-lg font-bold text-stone-600 mb-4">🎂 年代</h3>
-                        <ul id="age-ranking" class="space-y-3"></ul>
-                    </div>
-                    <div class="tifo-card">
                         <h3 class="text-lg font-bold text-stone-600 mb-4">🚻 性別</h3>
                         <ul id="gender-ranking" class="space-y-3"></ul>
+                    </div>
+                    <div class="tifo-card">
+                        <h3 class="text-lg font-bold text-stone-600 mb-4">🎂 年代</h3>
+                        <ul id="age-ranking" class="space-y-3"></ul>
                     </div>
                     <div class="tifo-card">
                         <h3 class="text-lg font-bold text-stone-600 mb-4">🌙 宿泊日数</h3>
                         <ul id="stay-duration-ranking" class="space-y-3"></ul>
                     </div>
                     <div class="tifo-card">
-                        <h3 class="text-lg font-bold text-stone-600 mb-4">👥 同伴者</h3>
+                        <h3 class="text-lg font-bold text-stone-600 mb-4">� 同伴者</h3>
                         <ul id="companion-ranking" class="space-y-3"></ul>
                     </div>
                     <div class="tifo-card col-span-1 md:col-span-2">
@@ -245,6 +244,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // --- CSV Parsing Function ---
     function parseCSV(text) {
+        // **FINAL FIX**: Check for and remove the UTF-8 BOM character.
+        if (text.charCodeAt(0) === 0xFEFF) {
+            text = text.slice(1);
+        }
+        
         const lines = text.trim().split(/\r?\n/);
         
         const regex = /(".*?"|[^,]+)(?=\s*,|\s*$)/g;
@@ -292,10 +296,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            // **FINAL FIX for MOJIBAKE**: Read as ArrayBuffer and decode with Shift_JIS
-            const arrayBuffer = await response.arrayBuffer();
-            const decoder = new TextDecoder('shift-jis');
-            const csvText = decoder.decode(arrayBuffer);
+            // **FINAL FIX**: Read as text, assuming UTF-8 by default.
+            const csvText = await response.text();
             
             const parsedData = parseCSV(csvText);
 
@@ -440,3 +442,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 </body>
 </html>
+�
