@@ -231,7 +231,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // --- Global state ---
     let surveyData = [];
-    let facilityHeaderKey = ''; // To store the actual header key for the facility name
+    let facilityHeaderKey = '';
 
     // --- DOM Element Setup ---
     const homeScreen = document.getElementById('home-screen');
@@ -244,13 +244,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // --- CSV Parsing Function ---
     function parseCSV(text) {
-        // **FINAL FIX**: Check for and remove the UTF-8 BOM character.
         if (text.charCodeAt(0) === 0xFEFF) {
             text = text.slice(1);
         }
-        
         const lines = text.trim().split(/\r?\n/);
-        
         const regex = /(".*?"|[^,]+)(?=\s*,|\s*$)/g;
         
         const headerLine = lines[0];
@@ -287,24 +284,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // --- Routing Function ---
+    const handleRouteChange = () => {
+        const hash = location.hash.substring(1);
+        const facilityNameFromHash = decodeURIComponent(hash);
+
+        if (facilityNameFromHash) {
+            const facilityData = surveyData.find(d => d[facilityHeaderKey] === facilityNameFromHash);
+            if (facilityData) {
+                displayAnalysis(facilityData);
+                homeScreen.classList.add('hidden');
+                analysisScreen.classList.remove('hidden');
+                facilitySelect.value = facilityNameFromHash;
+                return;
+            }
+        }
+        // If no hash or invalid hash, show home screen
+        homeScreen.classList.remove('hidden');
+        analysisScreen.classList.add('hidden');
+    };
+
     // --- Data Loading ---
     async function loadData() {
         try {
             const response = await fetch('./milli_score.csv');
-            
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            // **FINAL FIX**: Read as text, assuming UTF-8 by default.
-            const csvText = await response.text();
+            const arrayBuffer = await response.arrayBuffer();
+            const decoder = new TextDecoder('shift-jis');
+            const csvText = decoder.decode(arrayBuffer);
             
             const parsedData = parseCSV(csvText);
 
-            // Filter out rows where the facility name is invalid
             surveyData = parsedData.filter(row => row && typeof row[facilityHeaderKey] === 'string' && row[facilityHeaderKey].trim() !== '');
-            
-            // Sort using the dynamic facility header key
             surveyData.sort((a, b) => a[facilityHeaderKey].localeCompare(b[facilityHeaderKey]));
 
             if (surveyData.length === 0) {
@@ -320,6 +334,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             loadingMessage.classList.add('hidden');
             mainContent.classList.remove('hidden');
+            
+            // Handle initial route after data is loaded
+            handleRouteChange();
 
         } catch (error) {
             console.error("Full error object:", error);
@@ -330,19 +347,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Event Listeners ---
     analyzeButton.addEventListener('click', () => {
         const selectedFacilityName = facilitySelect.value;
-        const facilityData = surveyData.find(d => d[facilityHeaderKey] === selectedFacilityName);
-        if (facilityData) {
-            displayAnalysis(facilityData);
-            homeScreen.classList.add('hidden');
-            analysisScreen.classList.remove('hidden');
-            window.scrollTo(0, 0);
-        }
+        location.hash = encodeURIComponent(selectedFacilityName);
     });
 
     backButton.addEventListener('click', () => {
-        homeScreen.classList.remove('hidden');
-        analysisScreen.classList.add('hidden');
+        location.hash = '';
     });
+    
+    // Listen for hash changes (e.g., browser back/forward buttons)
+    window.addEventListener('hashchange', handleRouteChange);
 
     // --- Helper Functions ---
     function getRank(value, dataKey) {
