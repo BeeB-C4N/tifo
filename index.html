@@ -251,16 +251,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const lines = text.trim().split(/\r?\n/);
         
-        const regex = /(".*?"|[^,]+)(?=\s*,|\s*$)/g;
+        // **FINAL FIX**: This robust regex correctly handles quoted fields, empty fields, and commas within fields.
+        const regex = /(?:^|,)(?:"([^"]*(?:""[^"]*)*)"|([^,]*))/g;
         
-        const headerLine = lines[0];
-        const headers = (headerLine.match(regex) || []).map(h => {
-            let header = h.trim();
-            if (header.startsWith('"') && header.endsWith('"')) {
-                header = header.slice(1, -1);
-            }
-            return header;
-        });
+        const headers = [];
+        let match;
+        while(match = regex.exec(lines[0])) {
+            let value = match[1] !== undefined ? match[1].replace(/""/g, '"') : match[2];
+            headers.push(value.trim());
+        }
 
         if (headers.length > 0) {
             facilityHeaderKey = headers[0];
@@ -269,20 +268,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         return lines.slice(1).map(line => {
-            const values = line.match(regex) || [];
             const obj = {};
-            headers.forEach((header, i) => {
-                let value = (values[i] || '').trim();
-                if (value.startsWith('"') && value.endsWith('"')) {
-                    value = value.slice(1, -1);
+            let i = 0;
+            regex.lastIndex = 0; // Reset regex state for each line
+            while(match = regex.exec(line)) {
+                if(i < headers.length) {
+                    const header = headers[i];
+                    let value = match[1] !== undefined ? match[1].replace(/""/g, '"') : match[2];
+                    const numValue = Number(value);
+                    if (value !== '' && !isNaN(numValue)) {
+                        obj[header] = numValue;
+                    } else {
+                        obj[header] = value === '' ? null : value;
+                    }
+                    i++;
                 }
-                const numValue = Number(value);
-                if (value !== '' && !isNaN(numValue)) {
-                    obj[header] = numValue;
-                } else {
-                    obj[header] = value === '' ? null : value;
-                }
-            });
+            }
             return obj;
         });
     }
@@ -302,7 +303,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
         }
-        // If no hash or invalid hash, show home screen
         homeScreen.classList.remove('hidden');
         analysisScreen.classList.add('hidden');
     };
@@ -315,17 +315,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            // **FINAL FIX**: Read as text, which correctly handles UTF-8 by default.
-            // All special decoding logic is removed.
             const csvText = await response.text();
             
             const parsedData = parseCSV(csvText);
 
-            // Filter out rows where the facility name is invalid
             surveyData = parsedData.filter(row => row && typeof row[facilityHeaderKey] === 'string' && row[facilityHeaderKey].trim() !== '');
-            
-            // Sort using the dynamic facility header key
-            surveyData.sort((a, b) => a[facilityHeaderKey].localeCompare(b[facilityHeaderKey]));
+            surveyData.sort((a, b) => a[facilityHeaderKey].localeCompare(b[facilityHeaderKey], 'ja'));
 
             if (surveyData.length === 0) {
                  throw new Error("No valid data rows found after parsing and filtering.");
@@ -341,7 +336,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             loadingMessage.classList.add('hidden');
             mainContent.classList.remove('hidden');
             
-            // Handle initial route after data is loaded
             handleRouteChange();
 
         } catch (error) {
@@ -360,7 +354,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         location.hash = '';
     });
     
-    // Listen for hash changes (e.g., browser back/forward buttons)
     window.addEventListener('hashchange', handleRouteChange);
 
     // --- Helper Functions ---
@@ -385,7 +378,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     function getTopN(groups, n) {
         return Object.entries(groups)
-            .filter(([key, value]) => value > 0 && key !== 'null')
+            .filter(([key, value]) => value > 0 && key !== 'null' && key !== 'undefined')
             .sort(([, a], [, b]) => b - a)
             .slice(0, n);
     }
