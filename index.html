@@ -75,8 +75,13 @@
     <!-- ホーム画面 -->
     <div id="home-screen" class="min-h-screen flex flex-col items-center justify-center p-4 text-center">
         <div class="flex items-center justify-center gap-4 mb-4">
+            <div class="w-24 h-24">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="var(--tifo-primary)" d="M47.9,-51.9C62.4,-41.2,74.7,-25.9,78.2,-8.1C81.7,9.7,76.4,30.1,64.8,44.2C53.2,58.3,35.3,66.1,17.7,70.8C0.1,75.5,-17.2,77.1,-33.1,70.2C-49,63.3,-63.5,47.9,-71.4,30.1C-79.3,12.3,-80.6,-7.8,-74.3,-24.1C-68,-40.4,-54.1,-52.9,-38.8,-60.1C-23.5,-67.3,-6.8,-69.2,8.9,-66.1C24.6,-63,47.9,-51.9,47.9,-51.9Z" transform="translate(100 100)" />
+                    <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-size="50" font-weight="bold" fill="white" letter-spacing="2">TIFO</text>
+                </svg>
+            </div>
             <img src="tifo.png" alt="TIFOちゃん" class="h-20 w-20 object-contain">
-            <h1 class="text-5xl font-bold" style="color: var(--tifo-text);">TIFO</h1>
         </div>
         <p class="text-lg text-gray-600 mb-8">観光AIアドバイザリー</p>
         <div id="loading-message" class="text-gray-600"><p>データを読み込んでいます...</p></div>
@@ -116,7 +121,7 @@
                 <div class="tifo-card"><div id="tabs-container" class="flex space-x-2 p-1 bg-gray-100 rounded-xl mb-4"></div><div id="tab-panels-container"></div></div>
             </section>
             <section>
-                <h2 class="text-2xl font-bold mb-4 flex items-center">� グループ別 来訪者TOP5</h2>
+                <h2 class="text-2xl font-bold mb-4 flex items-center">🏆 グループ別 来訪者TOP5</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="tifo-card"><h3 class="text-lg font-bold mb-4">🚻 性別</h3><ul id="gender-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card"><h3 class="text-lg font-bold mb-4">🎂 年代</h3><ul id="age-ranking" class="space-y-3"></ul></div>
@@ -126,7 +131,7 @@
                 </div>
             </section>
             <section>
-                 <h2 class="text-2xl font-bold mb-4 flex items-center">🤖 tifoちゃんからのアドバイス</h2>
+                 <h2 class="text-2xl font-bold mb-4 flex items-center">Tifoちゃんからのアドバイス</h2>
                  <div class="flex items-start gap-4">
                      <img src="tifo.png" alt="TIFOちゃん" class="h-16 w-16 object-contain flex-shrink-0">
                      <div class="bg-white p-4 rounded-r-xl rounded-bl-xl relative w-full">
@@ -152,6 +157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Global state ---
     let surveyData = [];
     let facilityHeaderKey = '';
+    let adviceLines = [];
 
     // --- DOM Element Setup ---
     const homeScreen = document.getElementById('home-screen');
@@ -217,19 +223,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Data Loading ---
     async function loadData() {
         try {
-            const response = await fetch('./milli_score.csv');
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const csvText = await response.text();
+            const [csvResponse, adviceResponse] = await Promise.all([
+                fetch('./milli_score.csv'),
+                fetch('./tifo_advice.txt').catch(e => { console.warn("tifo_advice.txt not found, using default advice."); return null; })
+            ]);
+
+            if (!csvResponse.ok) throw new Error(`milli_score.csv not found: ${csvResponse.status}`);
+            
+            const csvText = await csvResponse.text();
             const parsedData = parseCSV(csvText);
             surveyData = parsedData.filter(row => row && typeof row[facilityHeaderKey] === 'string' && row[facilityHeaderKey].trim() !== '');
             surveyData.sort((a, b) => a[facilityHeaderKey].localeCompare(b[facilityHeaderKey], 'ja'));
             if (surveyData.length === 0) throw new Error("No valid data rows found.");
+
+            if (adviceResponse && adviceResponse.ok) {
+                const adviceText = await adviceResponse.text();
+                adviceLines = adviceText.trim().split(/\r?\n/).filter(line => line.trim() !== '');
+            }
+
             surveyData.forEach(data => {
                 const option = document.createElement('option');
                 option.value = data[facilityHeaderKey];
                 option.textContent = data[facilityHeaderKey];
                 facilitySelect.appendChild(option);
             });
+
             loadingMessage.classList.add('hidden');
             mainContent.classList.remove('hidden');
             handleRouteChange();
@@ -382,8 +400,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderRankingList('stay-duration-ranking', getTopN(stayDurationGroups, 5));
         renderRankingList('companion-ranking', getTopN(companionGroups, 5));
         renderRankingList('purpose-ranking', getTopN(purposeGroups, 5));
+        
         // Tifo-chan's advice
-        document.getElementById('tifo-advice-text').innerHTML = `<strong>${data[facilityHeaderKey]}さんへ</strong><br><br><strong class="text-teal-600">データ収集強化</strong><br>アンケート回答率向上のため、インセンティブ施策の導入を検討してください。`;
+        const adviceContainer = document.getElementById('tifo-advice-text');
+        let finalAdvice = '分析データを元に、さらなる改善点を探してみましょう！'; // Default advice
+        if (adviceLines.length > 0) {
+            const randomIndex = Math.floor(Math.random() * adviceLines.length);
+            finalAdvice = adviceLines[randomIndex];
+        }
+        adviceContainer.innerHTML = `<strong>${data[facilityHeaderKey]}さんへ</strong><br><br>${finalAdvice}`;
     }
 
     // --- Start the application ---
@@ -393,4 +418,3 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 </body>
 </html>
-�
