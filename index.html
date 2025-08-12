@@ -72,7 +72,6 @@
     </style>
 </head>
 <body>
-    <!-- ホーム画面 -->
     <div id="home-screen" class="min-h-screen flex flex-col items-center justify-center p-4 text-center">
         <div class="flex items-center justify-center gap-4 mb-4">
             <div class="w-24 h-24">
@@ -95,7 +94,6 @@
         </div>
     </div>
 
-    <!-- 分析結果画面 -->
     <div id="analysis-screen" class="hidden p-4 md:p-8 max-w-5xl mx-auto">
         <header class="flex items-center justify-between mb-8">
             <h1 id="facility-title" class="text-3xl font-bold"></h1>
@@ -115,10 +113,6 @@
                     <div class="tifo-card text-center"><h3 class="text-lg font-bold mb-2">🏨 施設全体</h3><div class="flex items-baseline justify-center"><p id="facility-satisfaction" class="text-5xl font-bold" style="color: var(--tifo-primary);"></p><span class="text-2xl font-bold text-gray-500">/ 5.0</span></div><div class="w-full progress-bar-bg mt-3"><div id="facility-satisfaction-bar" class="progress-bar"></div></div><p id="facility-satisfaction-rank" class="text-sm text-gray-500 mt-3"></p></div>
                     <div class="tifo-card text-center"><h3 class="text-lg font-bold mb-2">🚗 旅全体</h3><div class="flex items-baseline justify-center"><p id="trip-satisfaction" class="text-5xl font-bold" style="color: var(--tifo-primary);"></p><span class="text-2xl font-bold text-gray-500">/ 5.0</span></div><div class="w-full progress-bar-bg mt-3"><div id="trip-satisfaction-bar" class="progress-bar"></div></div><p id="trip-satisfaction-rank" class="text-sm text-gray-500 mt-3"></p></div>
                 </div>
-            </section>
-            <section>
-                <h2 class="text-2xl font-bold mb-4 flex items-center">💡 AIからのアドバイス</h2>
-                <div class="tifo-card"><div id="tabs-container" class="flex space-x-2 p-1 bg-gray-100 rounded-xl mb-4"></div><div id="tab-panels-container"></div></div>
             </section>
             <section>
                 <h2 class="text-2xl font-bold mb-4 flex items-center">🏆 グループ別 来訪者TOP5</h2>
@@ -143,7 +137,6 @@
         </main>
     </div>
 
-    <!-- 免責事項モーダル -->
     <div id="disclaimer-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">免責事項</h2>
@@ -389,7 +382,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateSatisfactionCard('product-satisfaction', data['商品・サービス満足度'], '商品・サービス満足度');
         updateSatisfactionCard('facility-satisfaction', data['施設全体満足度'], '施設全体満足度');
         updateSatisfactionCard('trip-satisfaction', data['旅全体満足度'], '旅全体満足度');
-        setupAIAssistant(data);
+        // setupAIAssistant(data);
         const ageGroups = { '10代': data['10代'], '20代': data['20代'], '30代': data['30代'], '40代': data['40代'], '50代': data['50代'], '60代': data['60代'], '70代': data['70代'], '80代': data['80代'] };
         const genderGroups = { '男性': data['男性'], '女性': data['女性'] };
         const stayDurationGroups = { '日帰り': data['日帰り'], '1泊': data['1泊'], '2泊': data['2泊'], '3泊': data['3泊'], '4泊以上': data['4泊以上'] };
