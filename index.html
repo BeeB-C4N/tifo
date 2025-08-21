@@ -9,13 +9,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* --- Tifoちゃんカラーテーマ --- */
         :root {
-            --tifo-bg: #F7FAFC; /* Light Grayish Blue */
-            --tifo-text: #2D3748; /* Dark Slate */
-            --tifo-primary: #4FD1C5; /* Teal */
-            --tifo-primary-dark: #38B2AC; /* Darker Teal */
-            --tifo-card-border: #E2E8F0; /* Light Gray */
+            --tifo-bg: #F7FAFC;
+            --tifo-text: #2D3748;
+            --tifo-primary: #4FD1C5;
+            --tifo-primary-dark: #38B2AC;
+            --tifo-card-border: #E2E8F0;
             --tifo-card-bg: #FFFFFF;
         }
         body {
@@ -29,7 +28,6 @@
             padding: 1.5rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             border: 1px solid var(--tifo-card-border);
-            transition: all 0.3s ease-in-out;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -54,19 +52,28 @@
         .rank-badge {
             width: 2rem; height: 2rem; border-radius: 50%; display: inline-flex;
             align-items: center; justify-content: center; font-weight: bold; color: white;
+            flex-shrink: 0;
         }
         .rank-1 { background-color: #FFD700; }
         .rank-2 { background-color: #C0C0C0; }
         .rank-3 { background-color: #CD7F32; }
         .rank-4, .rank-5 { background-color: #A9A9A9; }
-        .progress-bar-bg { background-color: #EDF2F7; border-radius: 9999px; overflow: hidden; height: 0.75rem; }
-        .progress-bar { background-color: #63B3ED; height: 100%; border-radius: 9999px; transition: width 0.5s ease-in-out; }
+        .progress-bar-bg { background-color: #EDF2F7; border-radius: 9999px; overflow: hidden; height: 1.25rem; }
+        .progress-bar {
+            background-color: var(--tifo-primary);
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.5s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
         .nps-bar-container { position: relative; background: linear-gradient(to right, #FEB2B2, #EDF2F7, #9AE6B4); height: 0.75rem; border-radius: 9999px; }
         .nps-bar-marker { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 2px; height: 1.25rem; background-color: rgba(113, 128, 150, 0.5); border-radius: 1px; }
         .nps-bar-value { position: absolute; top: 50%; transform: translateY(-50%); width: 0.75rem; height: 0.75rem; background-color: var(--tifo-text); border-radius: 50%; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.3); transition: left 0.5s ease-in-out; }
-        .tab-button.active { background-color: white; color: var(--tifo-primary); border-color: var(--tifo-primary); }
-        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; padding: 0; }
-        /* Modal Styles */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; }
         .modal-content { background-color: white; padding: 2rem; border-radius: 1rem; max-width: 90%; width: 600px; max-height: 80vh; overflow-y: auto; }
     </style>
@@ -109,10 +116,44 @@
                 </div>
                 <h2 class="text-2xl font-bold mb-4 flex items-center">⭐ 各種満足度スコア</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="tifo-card text-center"><h3 class="text-lg font-bold mb-2">🎁 商品・サービス</h3><div class="flex items-baseline justify-center"><p id="product-satisfaction" class="text-5xl font-bold" style="color: var(--tifo-primary);"></p><span class="text-2xl font-bold text-gray-500">/ 5.0</span></div><div class="w-full progress-bar-bg mt-3"><div id="product-satisfaction-bar" class="progress-bar"></div></div><p id="product-satisfaction-rank" class="text-sm text-gray-500 mt-3"></p></div>
-                    <div class="tifo-card text-center"><h3 class="text-lg font-bold mb-2">🏨 施設全体</h3><div class="flex items-baseline justify-center"><p id="facility-satisfaction" class="text-5xl font-bold" style="color: var(--tifo-primary);"></p><span class="text-2xl font-bold text-gray-500">/ 5.0</span></div><div class="w-full progress-bar-bg mt-3"><div id="facility-satisfaction-bar" class="progress-bar"></div></div><p id="facility-satisfaction-rank" class="text-sm text-gray-500 mt-3"></p></div>
-                    <div class="tifo-card text-center"><h3 class="text-lg font-bold mb-2">🚗 旅全体</h3><div class="flex items-baseline justify-center"><p id="trip-satisfaction" class="text-5xl font-bold" style="color: var(--tifo-primary);"></p><span class="text-2xl font-bold text-gray-500">/ 5.0</span></div><div class="w-full progress-bar-bg mt-3"><div id="trip-satisfaction-bar" class="progress-bar"></div></div><p id="trip-satisfaction-rank" class="text-sm text-gray-500 mt-3"></p></div>
+                    <div class="tifo-card text-center"><h3 class="text-lg font-bold mb-2">🎁 商品・サービス</h3><div class="flex items-baseline justify-center"><p id="product-satisfaction" class="text-5xl font-bold" style="color: var(--tifo-primary);"></p><span class="text-2xl font-bold text-gray-500">/ 5.0</span></div><div class="w-full progress-bar-bg mt-3"><div id="product-satisfaction-bar" class="progress-bar" style="height: 1rem;"></div></div><p id="product-satisfaction-rank" class="text-sm text-gray-500 mt-3"></p></div>
+                    <div class="tifo-card text-center"><h3 class="text-lg font-bold mb-2">🏨 施設全体</h3><div class="flex items-baseline justify-center"><p id="facility-satisfaction" class="text-5xl font-bold" style="color: var(--tifo-primary);"></p><span class="text-2xl font-bold text-gray-500">/ 5.0</span></div><div class="w-full progress-bar-bg mt-3"><div id="facility-satisfaction-bar" class="progress-bar" style="height: 1rem;"></div></div><p id="facility-satisfaction-rank" class="text-sm text-gray-500 mt-3"></p></div>
+                    <div class="tifo-card text-center"><h3 class="text-lg font-bold mb-2">🚗 旅全体</h3><div class="flex items-baseline justify-center"><p id="trip-satisfaction" class="text-5xl font-bold" style="color: var(--tifo-primary);"></p><span class="text-2xl font-bold text-gray-500">/ 5.0</span></div><div class="w-full progress-bar-bg mt-3"><div id="trip-satisfaction-bar" class="progress-bar" style="height: 1rem;"></div></div><p id="trip-satisfaction-rank" class="text-sm text-gray-500 mt-3"></p></div>
                 </div>
+            </section>
+            
+            <section id="persona-section" class="tifo-card hidden">
+                <h2 class="text-2xl font-bold mb-2 flex items-center gap-3">
+                    🎯 来訪者ペルソナ分析
+                </h2>
+                <p class="text-gray-600 mb-6">
+                    あなたの施設に最も多く訪れている顧客グループTOP3です。
+                </p>
+                <div id="persona-container" class="space-y-6">
+                    </div>
+                <template id="persona-template">
+                    <div class="border border-gray-200 rounded-xl p-4">
+                        <div class="flex items-center gap-4 mb-3">
+                            <span class="rank-badge"></span>
+                            <h3 class="text-xl font-bold text-gray-800"></h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                            <div class="persona-details space-y-2 text-gray-700">
+                                <p class="flex items-center gap-3"><span class="persona-companion-icon text-2xl w-8 text-center"></span> <span class="font-bold">同伴者:</span> <span class="persona-companion"></span></p>
+                                <p class="flex items-center gap-3"><span class="persona-age-icon text-2xl w-8 text-center"></span> <span class="font-bold">年　代:</span> <span class="persona-age"></span></p>
+                                <p class="flex items-center gap-3"><span class="text-2xl w-8 text-center">🗾</span> <span class="font-bold">地　方:</span> <span class="persona-region"></span></p>
+                                <p class="flex items-center gap-3"><span class="text-2xl w-8 text-center">💰</span> <span class="font-bold">年　収:</span> <span class="persona-income"></span></p>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="font-bold text-gray-700">来訪者全体における割合（確度）</label>
+                                <div class="progress-bar-bg">
+                                    <div class="progress-bar" style="width: 0%;"></div>
+                                </div>
+                                <p class="persona-counts text-right text-sm text-gray-500"></p>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </section>
             <section>
                 <h2 class="text-2xl font-bold mb-4 flex items-center">🏆 グループ別 来訪者TOP5</h2>
@@ -149,6 +190,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // --- Global state ---
     let surveyData = [];
+    let personaData = []; // ペルソナデータを格納する配列を追加
     let facilityHeaderKey = '';
     let adviceLines = [];
 
@@ -164,47 +206,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     const disclaimerModal = document.getElementById('disclaimer-modal');
     const closeModalButton = document.getElementById('close-modal-button');
     
-    // --- CSV Parsing Function ---
-    function parseCSV(text) {
-        // Handle BOM
-        if (text.charCodeAt(0) === 0xFEFF) {
-            text = text.slice(1);
-        }
+    // --- Generic CSV Parsing Function ---
+    function parseCSV(text, firstHeaderAsKey = true) {
+        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
         
         const lines = text.trim().split(/\r?\n/);
         const regex = /(?:^|,)(?:"([^"]*(?:""[^"]*)*)"|([^,]*))/g;
         
         const headers = [];
         let match;
-        // Manually parse the first line for headers, trimming whitespace
         while(match = regex.exec(lines[0])) {
             let value = match[1] !== undefined ? match[1].replace(/""/g, '"') : match[2];
             headers.push(value.trim());
         }
 
-        // The first column header is used to identify the facility name.
-        // It might be an empty string if the CSV starts with a comma. Let's find the first non-empty header.
-        facilityHeaderKey = headers.find(h => h && h.trim() !== '') || headers[0];
-        
-        if (!facilityHeaderKey) {
-            throw new Error("CSV has no valid headers.");
+        if (firstHeaderAsKey && headers.length > 0) {
+            facilityHeaderKey = headers[0];
         }
+        if (!facilityHeaderKey) throw new Error("Could not determine a key header from CSV.");
 
         return lines.slice(1).map(line => {
             const obj = {};
             let i = 0;
-            regex.lastIndex = 0; // Reset regex index for each line
+            regex.lastIndex = 0;
             while(match = regex.exec(line)) {
                 if(i < headers.length) {
                     const header = headers[i];
                     let value = match[1] !== undefined ? match[1].replace(/""/g, '"') : match[2];
                     
-                    // Convert to number if possible, otherwise keep as string. Handle empty strings as null.
                     if (value === null || value.trim() === '') {
                         obj[header] = null;
                     } else {
                         const numValue = Number(value);
-                         // Check if value is a non-empty string that can be converted to a number
                         obj[header] = !isNaN(numValue) && value.trim() !== '' ? numValue : value;
                     }
                     i++;
@@ -214,11 +247,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // --- Routing Function ---
+    // --- Routing and Screen Transition ---
     const handleRouteChange = () => {
         const hash = location.hash.substring(1);
         const facilityNameFromHash = decodeURIComponent(hash);
-        if (facilityNameFromHash) {
+        if (facilityNameFromHash && surveyData.length > 0) {
             const facilityData = surveyData.find(d => d[facilityHeaderKey] === facilityNameFromHash);
             if (facilityData) {
                 displayAnalysis(facilityData);
@@ -235,27 +268,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Data Loading ---
     async function loadData() {
         try {
-            const [csvResponse, adviceResponse] = await Promise.all([
+            const [scoreResponse, personaResponse, adviceResponse] = await Promise.all([
                 fetch('./milli_score.csv'),
-                fetch('./tifo_advice.txt').catch(e => { console.warn("tifo_advice.txt not found, using default advice."); return null; })
+                fetch('./milli_persona.csv'),
+                fetch('./tifo_advice.txt').catch(e => null)
             ]);
 
-            if (!csvResponse.ok) throw new Error(`milli_score.csv not found: ${csvResponse.status}`);
+            if (!scoreResponse.ok) throw new Error(`milli_score.csv failed to load: ${scoreResponse.statusText}`);
+            if (!personaResponse.ok) throw new Error(`milli_persona.csv failed to load: ${personaResponse.statusText}`);
             
-            const csvText = await csvResponse.text();
-            const parsedData = parseCSV(csvText);
-            // Filter out any rows where the facility name is null or empty
-            surveyData = parsedData.filter(row => row && row[facilityHeaderKey] && typeof row[facilityHeaderKey] === 'string' && row[facilityHeaderKey].trim() !== '');
-            // Sort facilities by name
+            // スコアデータを解析
+            const scoreText = await scoreResponse.text();
+            const parsedScoreData = parseCSV(scoreText, true); // `facilityHeaderKey` を設定
+            surveyData = parsedScoreData.filter(row => row && row[facilityHeaderKey] && String(row[facilityHeaderKey]).trim() !== '');
             surveyData.sort((a, b) => (a[facilityHeaderKey] || '').localeCompare((b[facilityHeaderKey] || ''), 'ja'));
+            if (surveyData.length === 0) throw new Error("No valid data rows found in milli_score.csv.");
             
-            if (surveyData.length === 0) throw new Error("No valid data rows found in CSV.");
+            // ペルソナデータを解析
+            const personaText = await personaResponse.text();
+            personaData = parseCSV(personaText, false); // `facilityHeaderKey` を再設定しない
 
+            // アドバイスを解析
             if (adviceResponse && adviceResponse.ok) {
                 const adviceText = await adviceResponse.text();
                 adviceLines = adviceText.trim().split(/\r?\n/).filter(line => line.trim() !== '');
             }
 
+            // ドロップダウンリストを作成
             surveyData.forEach(data => {
                 const option = document.createElement('option');
                 option.value = data[facilityHeaderKey];
@@ -268,7 +307,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             handleRouteChange();
         } catch (error) {
             console.error("Full error object:", error);
-            loadingMessage.innerHTML = `<p class="text-red-500 font-bold">エラー: データファイルの読み込みに失敗しました。</p><p class="text-sm mt-2">${error.message}</p><p class="text-sm mt-2">ブラウザの開発者コンソール（F12キー）で詳細なエラーを確認してください。</p>`;
+            loadingMessage.innerHTML = `<p class="text-red-500 font-bold">エラー: データファイルの読み込みに失敗しました。</p><p class="text-sm mt-2">${error.message}</p>`;
         }
     }
 
@@ -324,23 +363,92 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // --- Persona Display Function ---
+    function displayPersonaAnalysis(scoreData, facilityName) {
+        const personaSection = document.getElementById('persona-section');
+        const container = document.getElementById('persona-container');
+        const template = document.getElementById('persona-template');
+        container.innerHTML = ''; // 前回の表示をクリア
+
+        const personaRow = personaData.find(p => p[facilityHeaderKey] === facilityName);
+
+        if (!personaRow) {
+            personaSection.classList.add('hidden');
+            return;
+        }
+
+        const personas = [];
+        for (let i = 1; i <= 3; i++) {
+            if (personaRow[`ps${i}_カウント`]) {
+                personas.push({
+                    rank: i,
+                    companion: personaRow[`ps${i}_同伴者`],
+                    age: personaRow[`ps${i}_年代`],
+                    region: personaRow[`ps${i}_地方`],
+                    income: personaRow[`ps${i}_年収`],
+                    count: personaRow[`ps${i}_カウント`],
+                });
+            }
+        }
+        
+        if (personas.length === 0) {
+            personaSection.classList.add('hidden');
+            return;
+        }
+
+        const companionIcons = { "家族連れ": "👪", "2人組": "👫", "友人": "🧑‍🤝‍🧑", "default": "👤" };
+        const ageIcons = { "若年層": "👶", "中年層": "👨‍💼", "高齢層": "👵", "default": "👤" };
+        const rankClasses = ["rank-1", "rank-2", "rank-3"];
+        const rankTitles = ["主要ペルソナ", "準主要ペルソナ", "その他ペルソナ"];
+        const totalAnswers = scoreData['全回答数'];
+
+        personas.forEach((persona, index) => {
+            const clone = template.content.cloneNode(true);
+            const card = clone.querySelector('.border');
+            
+            const rankBadge = card.querySelector('.rank-badge');
+            rankBadge.textContent = persona.rank;
+            rankBadge.classList.add(rankClasses[index]);
+            card.querySelector('h3').textContent = rankTitles[index];
+            
+            card.querySelector('.persona-companion').textContent = persona.companion;
+            card.querySelector('.persona-age').textContent = persona.age;
+            card.querySelector('.persona-region').textContent = persona.region;
+            card.querySelector('.persona-income').textContent = persona.income;
+            
+            card.querySelector('.persona-companion-icon').textContent = companionIcons[persona.companion] || companionIcons.default;
+            card.querySelector('.persona-age-icon').textContent = ageIcons[persona.age] || ageIcons.default;
+            
+            const certainty = (persona.count / totalAnswers) * 100;
+            const progressBar = card.querySelector('.progress-bar');
+            if (certainty > 0) {
+                progressBar.style.width = `${certainty.toFixed(1)}%`;
+                progressBar.textContent = `${certainty.toFixed(1)}%`;
+            } else {
+                progressBar.style.width = '0%';
+                progressBar.textContent = '0.0%';
+            }
+            card.querySelector('.persona-counts').textContent = `該当カウント: ${persona.count}件 / 全回答数 ${totalAnswers}件`;
+            
+            container.appendChild(clone);
+        });
+
+        personaSection.classList.remove('hidden');
+    }
+
     // --- Main Display Function ---
     function displayAnalysis(data) {
-        document.getElementById('facility-title').textContent = `${data[facilityHeaderKey]} の分析結果`;
+        const facilityName = data[facilityHeaderKey];
+        document.getElementById('facility-title').textContent = `${facilityName} の分析結果`;
         
-        // --- Basic Scores ---
+        // Basic Scores
         document.getElementById('total-answers').textContent = data['全回答数'] ?? 'N/A';
         const trendEl = document.getElementById('answer-trend');
         const trend = data['伸び率（対前月）'];
-        if (trend === null || trend === undefined) {
-            trendEl.innerHTML = `▶️ <span class="text-gray-600 font-bold ml-1">前月比 N/A</span>`;
-        } else if (trend > 0) {
-            trendEl.innerHTML = `🔼 <span class="text-green-600 font-bold ml-1">前月比 +${(trend * 100).toFixed(1)}%</span>`;
-        } else if (trend < 0) {
-            trendEl.innerHTML = `🔽 <span class="text-red-600 font-bold ml-1">前月比 ${(trend * 100).toFixed(1)}%</span>`;
-        } else {
-            trendEl.innerHTML = `▶️ <span class="text-gray-600 font-bold ml-1">前月比 ±0%</span>`;
-        }
+        if (trend === null || trend === undefined) trendEl.innerHTML = `▶️ <span class="text-gray-600 font-bold ml-1">前月比 N/A</span>`;
+        else if (trend > 0) trendEl.innerHTML = `🔼 <span class="text-green-600 font-bold ml-1">前月比 +${(trend * 100).toFixed(1)}%</span>`;
+        else if (trend < 0) trendEl.innerHTML = `🔽 <span class="text-red-600 font-bold ml-1">前月比 ${(trend * 100).toFixed(1)}%</span>`;
+        else trendEl.innerHTML = `▶️ <span class="text-gray-600 font-bold ml-1">前月比 ±0%</span>`;
         const answersRank = getRank(data['全回答数'], '全回答数');
         document.getElementById('total-answers-rank').textContent = `(全${answersRank.total}施設中 ${answersRank.rank}位)`;
         
@@ -352,12 +460,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         const npsRank = getRank(data.NPS, 'NPS');
         document.getElementById('nps-rank').textContent = `(全${npsRank.total}施設中 ${npsRank.rank}位)`;
         
-        // --- Satisfaction Scores ---
+        // Satisfaction Scores
         updateSatisfactionCard('product-satisfaction', data['商品・サービス満足度'], '商品・サービス満足度');
         updateSatisfactionCard('facility-satisfaction', data['施設全体満足度'], '施設全体満足度');
         updateSatisfactionCard('trip-satisfaction', data['旅全体満足度'], '旅全体満足度');
         
-        // --- Rankings ---
+        // ★★★ Call Persona Analysis Display Function ★★★
+        displayPersonaAnalysis(data, facilityName);
+        
+        // Rankings
         const ageGroups = { '10代': data['10代'], '20代': data['20代'], '30代': data['30代'], '40代': data['40代'], '50代': data['50代'], '60代': data['60代'], '70代': data['70代'], '80代': data['80代'], '90代': data['90代'], '100代': data['100代'] };
         const genderGroups = { '男性': data['男性'], '女性': data['女性'] };
         const stayDurationGroups = { '日帰り': data['日帰り'], '1泊': data['1泊'], '2泊': data['2泊'], '3泊': data['3泊'], '4泊以上': data['4泊以上'] };
@@ -370,14 +481,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderRankingList('companion-ranking', getTopN(companionGroups, 5));
         renderRankingList('purpose-ranking', getTopN(purposeGroups, 5));
         
-        // --- Tifo-chan's advice ---
+        // Tifo-chan's advice
         const adviceContainer = document.getElementById('tifo-advice-text');
-        let finalAdvice = '分析データを元に、さらなる改善点を探してみましょう！'; // Default advice
+        let finalAdvice = '分析データを元に、さらなる改善点を探してみましょう！';
         if (adviceLines.length > 0) {
             const randomIndex = Math.floor(Math.random() * adviceLines.length);
             finalAdvice = adviceLines[randomIndex];
         }
-        adviceContainer.innerHTML = `<strong>${data[facilityHeaderKey]}さんへ</strong><br><br>${finalAdvice}`;
+        adviceContainer.innerHTML = `<strong>${facilityName}さんへ</strong><br><br>${finalAdvice}`;
     }
 
     // --- Start the application ---
