@@ -79,7 +79,6 @@
     </style>
 </head>
 <body>
-    <!-- ホーム画面 -->
     <div id="home-screen" class="min-h-screen flex flex-col items-center justify-center p-4 text-center">
         <div class="flex items-center justify-center gap-4 mb-4">
             <div class="w-24 h-24">
@@ -102,7 +101,6 @@
         </div>
     </div>
 
-    <!-- 分析結果画面 -->
     <div id="analysis-screen" class="hidden p-4 md:p-8 max-w-5xl mx-auto">
         <header class="flex items-center justify-between mb-8">
             <h1 id="facility-title" class="text-3xl font-bold"></h1>
@@ -111,12 +109,12 @@
 
         <main class="space-y-8">
             <section>
-                <h2 class="text-2xl font-bold mb-4 flex items-center">📊 基本スコア</h2>
+                <h2 class="text-2xl font-bold mb-4 flex items-center">基本スコア</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div class="tifo-card text-center"><h3 class="text-lg font-bold mb-2">全回答数</h3><p id="total-answers" class="text-6xl font-bold" style="color: var(--tifo-primary);"></p><div id="answer-trend" class="text-sm mt-2 flex items-center justify-center"></div><p id="total-answers-rank" class="text-sm text-gray-500 mt-3"></p></div>
                     <div class="tifo-card text-center"><h3 class="text-lg font-bold mb-2">❤️ NPS (顧客推奨度)</h3><p id="nps-score" class="text-6xl font-bold" style="color: var(--tifo-primary);"></p><p class="text-xs text-gray-500">(-100 ~ 100の範囲)</p><div class="w-full mt-3 relative"><div class="nps-bar-container"><div class="nps-bar-marker"></div><div id="nps-bar-value" class="nps-bar-value"></div></div></div><p id="nps-rank" class="text-sm text-gray-500 mt-3"></p></div>
                 </div>
-                <h2 class="text-2xl font-bold mb-4 flex items-center">⭐ 各種満足度スコア</h2>
+                <h2 class="text-2xl font-bold mb-4 flex items-center">各種満足度スコア</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="tifo-card text-center"><h3 class="text-lg font-bold mb-2">🎁 商品・サービス</h3><div class="flex items-baseline justify-center"><p id="product-satisfaction" class="text-5xl font-bold" style="color: var(--tifo-primary);"></p><span class="text-2xl font-bold text-gray-500">/ 5.0</span></div><div class="w-full progress-bar-bg mt-3"><div id="product-satisfaction-bar" class="progress-bar" style="height: 1rem;"></div></div><p id="product-satisfaction-rank" class="text-sm text-gray-500 mt-3"></p></div>
                     <div class="tifo-card text-center"><h3 class="text-lg font-bold mb-2">🏨 施設全体</h3><div class="flex items-baseline justify-center"><p id="facility-satisfaction" class="text-5xl font-bold" style="color: var(--tifo-primary);"></p><span class="text-2xl font-bold text-gray-500">/ 5.0</span></div><div class="w-full progress-bar-bg mt-3"><div id="facility-satisfaction-bar" class="progress-bar" style="height: 1rem;"></div></div><p id="facility-satisfaction-rank" class="text-sm text-gray-500 mt-3"></p></div>
@@ -126,7 +124,7 @@
             
             <section id="persona-section" class="tifo-card hidden">
                 <h2 class="text-2xl font-bold mb-2 flex items-center gap-3">
-                    🎯 来訪者ペルソナ分析
+                    来訪者ペルソナ分析
                 </h2>
                 <p class="text-gray-600 mb-6">
                     あなたの施設に最も多く訪れている顧客グループTOP3です。
@@ -159,14 +157,16 @@
             </section>
 
             <section>
-                <h2 class="text-2xl font-bold mb-4 flex items-center">🏆 グループ別 来訪者TOP5</h2>
+                <h2 class="text-2xl font-bold mb-4 flex items-center">グループ別 来訪者TOP5</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="tifo-card"><h3 class="text-lg font-bold mb-4">🚻 性別</h3><ul id="gender-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card"><h3 class="text-lg font-bold mb-4">🎂 年代</h3><ul id="age-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card"><h3 class="text-lg font-bold mb-4">🌙 宿泊日数</h3><ul id="stay-duration-ranking" class="space-y-3"></ul></div>
-                    <div class="tifo-card"><h3 class="text-lg font-bold mb-4">� 同伴者</h3><ul id="companion-ranking" class="space-y-3"></ul></div>
+                    <div class="tifo-card"><h3 class="text-lg font-bold mb-4">👪 同伴者</h3><ul id="companion-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card col-span-1 md:col-span-2"><h3 class="text-lg font-bold mb-4">✈️ 旅の目的</h3><ul id="purpose-ranking" class="space-y-3"></ul></div>
-                </div>
+                    <div class="tifo-card col-span-1 md:col-span-2"><h3 class="text-lg font-bold mb-4">💰 世帯年収</h3><ul id="income-ranking" class="space-y-3"></ul></div>
+                    <div class="tifo-card col-span-1 md:col-span-2"><h3 class="text-lg font-bold mb-4">🗾 都道府県</h3><ul id="prefecture-ranking" class="space-y-3"></ul></div>
+                    </div>
             </section>
             
             <section>
@@ -182,7 +182,6 @@
         </main>
     </div>
 
-    <!-- 免責事項モーダル -->
     <div id="disclaimer-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">免責事項</h2>
@@ -195,8 +194,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
     let surveyData = [];
     let personaData = [];
-    let scoreFacilityKey = ''; // scoreファイルのキー
-    let personaFacilityKey = ''; // personaファイルのキー
+    let scoreFacilityKey = '';
+    let personaFacilityKey = '';
     let adviceLines = [];
 
     const homeScreen = document.getElementById('home-screen');
@@ -458,18 +457,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         displayPersonaAnalysis(data, facilityName);
         
+        // --- ▼▼▼ ランキングデータを準備 ▼▼▼ ---
         const ageGroups = { '10代': data['10代'], '20代': data['20代'], '30代': data['30代'], '40代': data['40代'], '50代': data['50代'], '60代': data['60代'], '70代': data['70代'], '80代': data['80代'], '90代': data['90代'], '100代': data['100代'] };
         const genderGroups = { '男性': data['男性'], '女性': data['女性'] };
         const stayDurationGroups = { '日帰り': data['日帰り'], '1泊': data['1泊'], '2泊': data['2泊'], '3泊': data['3泊'], '4泊以上': data['4泊以上'] };
         const companionGroups = { 'ひとり旅': data['自分ひとり'], '恋人と': data['恋人'], '友人と': data['友人'], '夫婦2人': data['夫婦2人'], '団体旅行': data['団体旅行'], '親戚と': data['親戚'], '親と': data['親'], '職場の同僚と': data['職場の同僚'], '家族(小学生以下)': data['小学生以下連れの家族'], '家族(中学生)': data['中学生以下連れの家族'], '家族(高校生)': data['高校生連れの家族'] };
         const purposeGroups = { '宿でのんびり': data['宿でのんびり過ごす'], '温泉': data['温泉や露天風呂'], 'グルメ': data['地元の美味しいものを食べる'], '自然鑑賞': data['花見や紅葉などの自然鑑賞'], '名所・旧跡観光': data['名所、旧跡の観光'], 'テーマパーク': data['テーマパーク（遊園地、動物園、博物館など）'], '買い物': data['買い物、アウトレット'], 'イベント': data['お祭りやイベントへの参加・見物'], '鑑賞': data['スポーツ観戦や芸能鑑賞（コンサート等）'], 'アウトドア': data['アウトドア（海水浴、釣り、登山など）'], 'まちあるき': data['まちあるき、都市散策'], '体験': data['各種体験（手作り、果物狩りなど）'], 'スポーツ': data['スキー・スノボ、マリンスポーツ'] || data['その他スポーツ（ゴルフ、テニスなど）'], 'ドライブ': data['ドライブ・ツーリング'], '知人訪問': data['友人・親戚を尋ねる'], '仕事関係': data['出張など仕事関係'] };
         
+        // 新しいランキンググループ
+        const incomeGroups = {
+            '100万円未満': data['100万円未満'], '100-200万円': data['100万円以上 200万円未満'], '200-300万円': data['200万円以上 300万円未満'],
+            '300-400万円': data['300万円以上 400万円未満'], '400-500万円': data['400万円以上 500万円未満'], '500-600万円': data['500万円以上 600万円未満'],
+            '600-700万円': data['600万円以上 700万円未満'], '700-800万円': data['700万円以上 800万円未満'], '800-900万円': data['800万円以上 900万円未満'],
+            '900-1000万円': data['900万円以上 1,000万円未満'], '1000-1200万円': data['1,000万円以上 1,200万円未満'], '1200-1500万円': data['1,200万円以上 1,500万円未満'],
+            '1500万円以上': data['1,500万円以上']
+        };
+        const prefectureGroups = {
+            '北海道': data['北海道'], '青森県': data['青森県'], '岩手県': data['岩手県'], '宮城県': data['宮城県'], '秋田県': data['秋田県'], '山形県': data['山形県'], '福島県': data['福島県'],
+            '茨城県': data['茨城県'], '栃木県': data['栃木県'], '群馬県': data['群馬県'], '埼玉県': data['埼玉県'], '千葉県': data['千葉県'], '東京都': data['東京都'], '神奈川県': data['神奈川県'],
+            '新潟県': data['新潟県'], '富山県': data['富山県'], '石川県': data['石川県'], '福井県': data['福井県'], '山梨県': data['山梨県'], '長野県': data['長野県'], '岐阜県': data['岐阜県'],
+            '静岡県': data['静岡県'], '愛知県': data['愛知県'], '三重県': data['三重県'], '滋賀県': data['滋賀県'], '京都府': data['京都府'], '大阪府': data['大阪府'], '兵庫県': data['兵庫県'],
+            '奈良県': data['奈良県'], '和歌山県': data['和歌山県'], '鳥取県': data['鳥取県'], '島根県': data['島根県'], '岡山県': data['岡山県'], '広島県': data['広島県'], '山口県': data['山口県'],
+            '徳島県': data['徳島県'], '香川県': data['香川県'], '愛媛県': data['愛媛県'], '高知県': data['高知県'], '福岡県': data['福岡県'], '佐賀県': data['佐賀県'], '長崎県': data['長崎県'],
+            '熊本県': data['熊本県'], '大分県': data['大分県'], '宮崎県': data['宮崎県'], '鹿児島県': data['鹿児島県'], '沖縄県': data['沖縄県']
+        };
+        
+        // --- ランキングを描画 ---
         renderRankingList('age-ranking', getTopN(ageGroups, 5));
         renderRankingList('gender-ranking', getTopN(genderGroups, 5));
         renderRankingList('stay-duration-ranking', getTopN(stayDurationGroups, 5));
         renderRankingList('companion-ranking', getTopN(companionGroups, 5));
         renderRankingList('purpose-ranking', getTopN(purposeGroups, 5));
+        renderRankingList('income-ranking', getTopN(incomeGroups, 5));
+        renderRankingList('prefecture-ranking', getTopN(prefectureGroups, 5));
         
+        // --- Tifoちゃんのアドバイス ---
         const adviceContainer = document.getElementById('tifo-advice-text');
         let finalAdvice = '分析データを元に、さらなる改善点を探してみましょう！';
         if (adviceLines.length > 0) {
@@ -485,4 +507,3 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 </body>
 </html>
-�
