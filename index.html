@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TIFO - 観光AIアドバイザリー</title>
+    <title>TIFO - 観光猫型アドバイザリー</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -79,6 +79,7 @@
     </style>
 </head>
 <body>
+    <!-- ホーム画面 -->
     <div id="home-screen" class="min-h-screen flex flex-col items-center justify-center p-4 text-center">
         <div class="flex items-center justify-center gap-4 mb-4">
             <div class="w-24 h-24">
@@ -92,7 +93,7 @@
         <p class="text-lg text-gray-600 mb-8">観光AIアドバイザリー</p>
         <div id="loading-message" class="text-gray-600"><p>データを読み込んでいます...</p></div>
         <div id="main-content" class="w-full max-w-md hidden">
-            <label for="facility-select" class="block mb-2 text-gray-700 font-bold">分析したい施設を選んでにゃん 🐾</label>
+            <label for="facility-select" class="block mb-2 text-gray-700 font-bold">分析したい施設を選んでにゃ🐾</label>
             <select id="facility-select" class="w-full p-3 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-teal-400 focus:border-teal-400"></select>
             <button id="analyze-button" class="tifo-button w-full mt-6">データを分析</button>
         </div>
@@ -101,6 +102,7 @@
         </div>
     </div>
 
+    <!-- 分析結果画面 -->
     <div id="analysis-screen" class="hidden p-4 md:p-8 max-w-5xl mx-auto">
         <header class="flex items-center justify-between mb-8">
             <h1 id="facility-title" class="text-3xl font-bold"></h1>
@@ -182,6 +184,7 @@
         </main>
     </div>
 
+    <!-- 免責事項モーダル -->
     <div id="disclaimer-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">免責事項</h2>
@@ -284,10 +287,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             surveyData = surveyData.filter(row => row && row[scoreFacilityKey] && String(row[scoreFacilityKey]).trim() !== '');
             
-            // ▼▼▼ 並び替えのロジックをここに修正 ▼▼▼
-            // 回答数の多い順に並び替え
             surveyData.sort((a, b) => (b['全回答数'] ?? 0) - (a['全回答数'] ?? 0));
-            // ▲▲▲ ここまで ▲▲▲
             
             if (surveyData.length === 0) throw new Error("No valid data rows found in milli_score.csv.");
             
@@ -422,10 +422,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             card.querySelector('.persona-companion-icon').textContent = companionIcons[persona.companion] || companionIcons.default;
             card.querySelector('.persona-age-icon').textContent = ageIcons[persona.age] || ageIcons.default;
             
-            const certainty = totalAnswers > 0 ? (persona.count / totalAnswers) * 100 : 0;
+            // ▼▼▼ 確度バーの計算ロジックを修正 ▼▼▼
+            const certaintyPercent = totalAnswers > 0 ? (persona.count / totalAnswers) * 100 : 0;
+            const barWidthPercent = Math.min(100, (certaintyPercent / 25) * 100);
+            
             const progressBar = card.querySelector('.progress-bar');
-            progressBar.style.width = `${certainty.toFixed(1)}%`;
-            progressBar.textContent = `${certainty.toFixed(1)}%`;
+            progressBar.style.width = `${barWidthPercent}%`;
+            progressBar.textContent = `${certaintyPercent.toFixed(1)}%`; // テキストは実際の割合を表示
+            // ▲▲▲ ここまで ▲▲▲
+            
             card.querySelector('.persona-counts').textContent = `該当カウント: ${persona.count}件 / 全回答数 ${totalAnswers}件`;
             
             container.appendChild(clone);
