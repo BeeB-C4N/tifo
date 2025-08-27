@@ -1,9 +1,9 @@
-name: Sync milli CSV (public Sheets, gid fixed)
+name: Sync milli CSV (public Sheets)
 
 on:
   schedule:
     - cron: '15 20 * * *'   # 毎日 05:15 JST (= 20:15 UTC)
-  workflow_dispatch:        # 手動実行も可能
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -12,23 +12,24 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     env:
-      # === Google Sheets IDs ===
       SCORE_ID: 1Dmv06IhjwIR8nhoKPF158GsyGAF39CQIijIi0k134oA
       PERSONA_ID: 1z-vz7o91NNwZcz_lCy0WoN2vKoX87wKiT25GPNe6Hh4
-
-      # === 取得したいタブの gid を必ず実シートから確認して入れてください ===
       SCORE_GID: "0"
       PERSONA_GID: "0"
-
-      # === 保存先（リポジトリ内パス） ===
-      OUT_SCORE: tifo/ishikawa/milli_score.csv
-      OUT_PERSONA: tifo/ishikawa/milli_persona.csv
+      OUT_SCORE: ishikawa/milli_score.csv
+      OUT_PERSONA: ishikawa/milli_persona.csv
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Fetch CSVs with retry & show rows (gid specified)
+      - name: Remove mistaken path tifo/ishikawa (once)
+        run: |
+          if [ -d "tifo/ishikawa" ]; then
+            rm -rf tifo/ishikawa
+          fi
+
+      - name: Fetch CSVs
         run: |
           set -euo pipefail
           mkdir -p "$(dirname "$OUT_SCORE")"
@@ -36,17 +37,8 @@ jobs:
           fetch () {
             id="$1"; gid="$2"; out="$3"; tmp="$(mktemp)"
             url="https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}&_ts=$(date +%s)"
-            echo "GET: $url"
             curl -fsSL --retry 5 --retry-delay 3 -H 'Cache-Control: no-cache' "$url" -o "$tmp"
-
-            # HTMLが返ってきたら公開設定ミス
             head -c 512 "$tmp" | grep -qi "<html" && { echo "ERROR: got HTML (not public?)"; exit 1; }
-
-            # 取れた中身を軽くログ出し（先頭/特定行）
-            echo "sha256: $(sha256sum "$tmp" | cut -d' ' -f1)  => $out"
-            echo "--- HEAD of $out ---"; head -n 5 "$tmp" || true; echo "--------------------"
-            echo "--- Grep 金沢城公園 ---"; grep -n '^金沢城公園,' "$tmp" || echo "not found"; echo "---------------------"
-
             mv "$tmp" "$out"
             echo "Saved $out"
           }
@@ -59,12 +51,10 @@ jobs:
           set -e
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          # 未追跡も含めて差分判定
           git add -A
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "chore: daily sync CSV from Sheets ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))"
+            git commit -m "chore: daily sync CSV ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))"
             git push
           fi
