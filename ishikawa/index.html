@@ -204,7 +204,7 @@
                     <div class="tifo-card"><h3 class="text-lg font-bold mb-4">🚻 性別</h3><ul id="gender-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card"><h3 class="text-lg font-bold mb-4">🎂 年代</h3><ul id="age-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card"><h3 class="text-lg font-bold mb-4">🌙 宿泊日数</h3><ul id="stay-duration-ranking" class="space-y-3"></ul></div>
-                    <div class="tifo-card"><h3 class="text-lg font-bold mb-4">👪 同伴者</h3><ul id="companion-ranking" class="space-y-3"></ul></div>
+                    <div class="tifo-card"><h3 class="text-lg font-bold mb-4">� 同伴者</h3><ul id="companion-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card col-span-1 md:col-span-2"><h3 class="text-lg font-bold mb-4">✈️ 旅の目的</h3><ul id="purpose-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card col-span-1 md:col-span-2"><h3 class="text-lg font-bold mb-4">💰 世帯年収</h3><ul id="income-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card col-span-1 md:col-span-2"><h3 class="text-lg font-bold mb-4">🗾 都道府県</h3><ul id="prefecture-ranking" class="space-y-3"></ul></div>
@@ -240,7 +240,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let complainData = [];
     let scoreFacilityKey = '';
     let personaFacilityKey = '';
-    let complainFacilityKey = '施設';
+    
     let adviceLines = [];
 
     const homeScreen = document.getElementById('home-screen');
@@ -254,58 +254,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     const disclaimerModal = document.getElementById('disclaimer-modal');
     const closeModalButton = document.getElementById('close-modal-button');
     
-    function parseTSV(text) {
+    // ▼▼▼ 列番号（0から始まるインデックス）をここで定義 ▼▼▼
+    const complainColIndex = {
+        FACILITY: 1,
+        TIMESTAMP: 2,
+        SERVICE_SATISFACTION: 24,
+        SERVICE_REASON: 25,
+        FACILITY_SATISFACTION: 26,
+        FACILITY_REASON: 27,
+        INCONVENIENCE: 28,
+        INCONVENIENCE_REASON: 29,
+        REQUEST: 31,
+        NPS_REASON: 42,
+        BIRTH_YEAR: 35,
+        PREFECTURE: 36,
+        GENDER: 34,
+    };
+
+    function parseData(text, delimiter) {
         const lines = text.trim().replace(/\r/g, '').split('\n');
-        if (lines.length < 2) return [];
-        const headers = lines[0].split('\t').map(h => h.trim());
+        if (lines.length < 2) return { data: [], headers: [] };
+        const headers = lines[0].split(delimiter).map(h => h.trim());
         const data = lines.slice(1).map(line => {
-            const values = line.split('\t');
+            const values = line.split(delimiter);
             const obj = {};
             headers.forEach((header, i) => {
                 obj[header] = values[i] ? values[i].trim() : '';
             });
             return obj;
         });
-        return data;
+        return { data, headers };
     }
+    
+    function parseDataAsArrays(text, delimiter) {
+        const lines = text.trim().replace(/\r/g, '').split('\n');
+        if (lines.length < 2) return [];
+        return lines.slice(1).map(line => line.split(delimiter).map(val => val.trim()));
+    }
+
 
     async function fetchAndParse(url, format = 'csv') {
         const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Failed to load ${url}: ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`Failed to load ${url}: ${response.statusText}`);
         const text = await response.text();
         const cleanText = text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
         
-        if (format === 'tsv') {
-            return parseTSV(cleanText);
+        if (format === 'tsv-array') { // 列番号でアクセスするために配列としてパース
+            return parseDataAsArrays(cleanText, '\t');
         }
         
-        const lines = cleanText.trim().replace(/\r/g, '').split('\n');
-        if (lines.length < 2) return [];
-        const headerLine = lines[0];
-        const regex = /(?:^|,)(?:"([^"]*(?:""[^"]*)*)"|([^,]*))/g;
-        const headers = [];
-        let match;
-        while(match = regex.exec(headerLine)) {
-            let value = match[1] ? match[1].replace(/""/g, '"') : match[2];
-            headers.push(value.trim());
-        }
-        const data = lines.slice(1).map(line => {
-            const obj = {};
-            let i = 0;
-            regex.lastIndex = 0;
-            while(match = regex.exec(line)) {
-                if(i < headers.length) {
-                    const header = headers[i];
-                    let value = match[1] ? match[1].replace(/""/g, '"') : match[2];
-                    obj[header] = value ? value.trim() : '';
-                    i++;
-                }
-            }
-            return obj;
-        });
-        return data;
+        const delimiter = format === 'tsv' ? '\t' : ',';
+        return parseData(cleanText, delimiter).data;
     }
 
     const handleRouteChange = () => {
@@ -336,7 +335,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             personaData = await fetchAndParse('./milli_persona.csv');
 
             loadingStatus.textContent = '口コミデータを読み込み中...';
-            complainData = await fetchAndParse('./milli_complain.tsv', 'tsv');
+            complainData = await fetchAndParse('./milli_complain.tsv', 'tsv-array');
 
             loadingStatus.textContent = '追加データを読み込み中...';
             const adviceResponse = await fetch('../tifo_advice.txt').catch(e => null);
@@ -516,35 +515,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const filteredData = complainData
             .filter(row => {
-                if (row[complainFacilityKey] !== facilityName) return false;
-                const timestamp = new Date(row['タイムスタンプ']);
+                if (row[complainColIndex.FACILITY] !== facilityName) return false;
+                const timestamp = new Date(row[complainColIndex.TIMESTAMP]);
                 return !isNaN(timestamp) && timestamp >= oneMonthAgo;
             })
-            .sort((a, b) => new Date(b['タイムスタンプ']) - new Date(a['タイムスタンプ']));
+            .sort((a, b) => new Date(b[complainColIndex.TIMESTAMP]) - new Date(a[complainColIndex.TIMESTAMP]));
 
         const feedback = { service: [], facility: [], inconvenience: [], request: [], nps: [] };
         
-        // ▼▼▼ カラム名をTSVのヘッダーと完全に一致するように修正 ▼▼▼
-        const columnMap = {
-            service: { text: '上記満足度の理由につい具体的に教えてください。(サービス)', satisfaction: '当施設 における、商品・サービスの満足度をお答えください' },
-            facility: { text: '上記満足度の理由につい具体的に教えてください。(施設全体)', satisfaction: '当施設  における、施設全体の満足度をお答えください。' },
-            inconvenience: { text: '上記不便を感じたり、困ったことについて具体的に教えてください', satisfaction: '当施設  において、不便を感じたり困ったことはありましたか。' },
-            request: { text: 'あなたが求めている  当施設  の飲食、土産、アクティビティについて、ご自由にご意見をお聞かせください' },
-            nps: { text: '今回の旅行またはお出かけにおいて、特に人に薦めたいと感じたものとその理由について具体的に教えてください。' },
-        };
-
         filteredData.forEach(row => {
             const commonData = {
-                year: row['生まれた年をお答えください'] || '不明',
-                prefecture: row['お住いの都道府県をお答えください'] || '不明',
-                gender: row['性別をお答えください'] || '不明'
+                year: row[complainColIndex.BIRTH_YEAR] || '不明',
+                prefecture: row[complainColIndex.PREFECTURE] || '不明',
+                gender: row[complainColIndex.GENDER] || '不明'
             };
 
-            if (row[columnMap.service.text]) feedback.service.push({ ...commonData, text: row[columnMap.service.text], satisfaction: row[columnMap.service.satisfaction] });
-            if (row[columnMap.facility.text]) feedback.facility.push({ ...commonData, text: row[columnMap.facility.text], satisfaction: row[columnMap.facility.satisfaction] });
-            if (row[columnMap.inconvenience.satisfaction] === '感じた' && row[columnMap.inconvenience.text]) feedback.inconvenience.push({ ...commonData, text: row[columnMap.inconvenience.text], satisfaction: '感じた' });
-            if (row[columnMap.request.text]) feedback.request.push({ ...commonData, text: row[columnMap.request.text] });
-            if (row[columnMap.nps.text]) feedback.nps.push({ ...commonData, text: row[columnMap.nps.text] });
+            const serviceReason = row[complainColIndex.SERVICE_REASON];
+            if (serviceReason) feedback.service.push({ ...commonData, text: serviceReason, satisfaction: row[complainColIndex.SERVICE_SATISFACTION] });
+
+            const facilityReason = row[complainColIndex.FACILITY_REASON];
+            if (facilityReason) feedback.facility.push({ ...commonData, text: facilityReason, satisfaction: row[complainColIndex.FACILITY_SATISFACTION] });
+
+            const inconvenienceReason = row[complainColIndex.INCONVENIENCE_REASON];
+            if (row[complainColIndex.INCONVENIENCE] === '感じた' && inconvenienceReason) feedback.inconvenience.push({ ...commonData, text: inconvenienceReason, satisfaction: '感じた' });
+            
+            const requestText = row[complainColIndex.REQUEST];
+            if (requestText) feedback.request.push({ ...commonData, text: requestText });
+
+            const npsReason = row[complainColIndex.NPS_REASON];
+            if (npsReason) feedback.nps.push({ ...commonData, text: npsReason });
         });
 
         const createCommentCard = (comment, type) => {
@@ -682,3 +681,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 </body>
 </html>
+�
