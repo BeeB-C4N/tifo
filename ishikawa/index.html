@@ -8,8 +8,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Papa Parseライブラリを読み込み -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
     <style>
         :root {
             --tifo-bg: #F7FAFC;
@@ -79,14 +77,13 @@
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; }
         .modal-content { background-color: white; padding: 2rem; border-radius: 1rem; max-width: 90%; width: 600px; max-height: 80vh; overflow-y: auto; }
         
-        /* ▼▼▼ 追加したCSS ▼▼▼ */
         .feedback-tab-button {
             padding: 0.5rem 0.75rem;
             border-bottom: 3px solid transparent;
             font-weight: 600;
             color: #A0AEC0;
             transition: all 0.2s ease;
-            flex-shrink: 0; /* スマホ表示でタブが縮まないように */
+            flex-shrink: 0;
         }
         .feedback-tab-button:hover {
             background-color: #F7FAFC;
@@ -97,15 +94,13 @@
             border-bottom-color: var(--tifo-primary);
         }
         .feedback-content {
-            height: 40rem; /* カードの高さを固定 */
+            height: 40rem;
             overflow-y: auto;
         }
-        /* カスタムスクロールバー */
         .custom-scrollbar::-webkit-scrollbar { width: 8px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-        /* ▲▲▲ ここまで ▲▲▲ */
     </style>
 </head>
 <body>
@@ -181,11 +176,9 @@
                 </template>
             </section>
             
-            <!-- ▼▼▼ ここから新しいセクション ▼▼▼ -->
             <section id="customer-voice-section">
                 <h2 class="text-2xl font-bold mb-4 flex items-center">過去１か月の観光客の声</h2>
                 <div class="tifo-card !p-0 overflow-hidden">
-                    <!-- タブナビゲーション -->
                     <div class="px-6 border-b border-gray-200">
                         <nav class="-mb-px flex space-x-2 overflow-x-auto" aria-label="Tabs">
                             <button data-tab="service" class="feedback-tab-button active">商品・サービス</button>
@@ -195,7 +188,6 @@
                             <button data-tab="nps" class="feedback-tab-button">NPSの理由</button>
                         </nav>
                     </div>
-                    <!-- タブコンテンツ -->
                     <div class="p-6 bg-gray-50">
                         <div id="feedback-content-service" class="feedback-content custom-scrollbar space-y-4"></div>
                         <div id="feedback-content-facility" class="feedback-content custom-scrollbar space-y-4 hidden"></div>
@@ -205,7 +197,6 @@
                     </div>
                 </div>
             </section>
-            <!-- ▲▲▲ ここまで ▲▲▲ -->
 
             <section>
                 <h2 class="text-2xl font-bold mb-4 flex items-center">グループ別 来訪者TOP5</h2>
@@ -213,7 +204,7 @@
                     <div class="tifo-card"><h3 class="text-lg font-bold mb-4">🚻 性別</h3><ul id="gender-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card"><h3 class="text-lg font-bold mb-4">🎂 年代</h3><ul id="age-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card"><h3 class="text-lg font-bold mb-4">🌙 宿泊日数</h3><ul id="stay-duration-ranking" class="space-y-3"></ul></div>
-                    <div class="tifo-card"><h3 class="text-lg font-bold mb-4">👪 同伴者</h3><ul id="companion-ranking" class="space-y-3"></ul></div>
+                    <div class="tifo-card"><h3 class="text-lg font-bold mb-4">� 同伴者</h3><ul id="companion-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card col-span-1 md:col-span-2"><h3 class="text-lg font-bold mb-4">✈️ 旅の目的</h3><ul id="purpose-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card col-span-1 md:col-span-2"><h3 class="text-lg font-bold mb-4">💰 世帯年収</h3><ul id="income-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card col-span-1 md:col-span-2"><h3 class="text-lg font-bold mb-4">🗾 都道府県</h3><ul id="prefecture-ranking" class="space-y-3"></ul></div>
@@ -263,18 +254,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     const disclaimerModal = document.getElementById('disclaimer-modal');
     const closeModalButton = document.getElementById('close-modal-button');
     
-    // PapaParseでCSVを非同期に読み込む関数
-    function fetchAndParseCSV(url) {
-        return new Promise((resolve, reject) => {
-            Papa.parse(url, {
-                download: true,
-                header: true,
-                skipEmptyLines: true,
-                complete: (results) => resolve(results.data),
-                error: (error, file) => reject(new Error(`Failed to load or parse ${url}: ${error.message}`))
+    // ▼▼▼ Papa Parseの代わりに自前のCSVパーサーを定義 ▼▼▼
+    function parseCSV(text) {
+        const lines = text.trim().replace(/\r/g, '').split('\n');
+        const headers = lines[0].split(',');
+        const data = lines.slice(1).map(line => {
+            const values = line.split(',');
+            const obj = {};
+            headers.forEach((header, i) => {
+                obj[header] = values[i];
             });
+            return obj;
         });
+        return data;
     }
+
+    async function fetchAndParseCSV(url) {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to load ${url}: ${response.statusText}`);
+        }
+        const text = await response.text();
+        return parseCSV(text);
+    }
+    // ▲▲▲ ここまで ▲▲▲
 
     const handleRouteChange = () => {
         const hash = location.hash.substring(1);
@@ -563,7 +566,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
         
-        // 初期状態で最初のタブをアクティブに
         if (tabs.length > 0) {
             tabs[0].classList.add('active');
             contents.forEach(c => c.classList.add('hidden'));
@@ -647,3 +649,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 </body>
 </html>
+�
