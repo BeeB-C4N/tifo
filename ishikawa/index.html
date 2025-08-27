@@ -113,7 +113,7 @@
                     <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-size="50" font-weight="bold" fill="white" letter-spacing="2">TIFO</text>
                 </svg>
             </div>
-            <img src="./tifo.png" alt="TIFOちゃん" class="h-20 w-20 object-contain">
+            <img src="../tifo.png" alt="TIFOちゃん" class="h-20 w-20 object-contain">
         </div>
         <p class="text-lg text-gray-600 mb-8">観光猫型AIアドバイザリー</p>
         <div id="loading-message" class="text-gray-600"><p>データを読み込んでいます...</p></div>
@@ -214,7 +214,7 @@
             <section>
                  <h2 class="text-2xl font-bold mb-4 flex items-center">Tifoちゃんからのアドバイス</h2>
                  <div class="flex items-start gap-4">
-                      <img src="./tifo.png" alt="TIFOちゃん" class="h-32 w-32 object-contain flex-shrink-0">
+                      <img src="../tifo.png" alt="TIFOちゃん" class="h-32 w-32 object-contain flex-shrink-0">
                       <div class="bg-white p-4 rounded-r-xl rounded-bl-xl relative w-full">
                            <div class="absolute left-[-10px] top-[15px] w-0 h-0 border-t-[10px] border-t-transparent border-r-[10px] border-r-white border-b-[10px] border-b-transparent"></div>
                            <p id="tifo-advice-text" class="text-gray-700"></p>
@@ -254,17 +254,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const disclaimerModal = document.getElementById('disclaimer-modal');
     const closeModalButton = document.getElementById('close-modal-button');
     
-    // ▼▼▼ TSVパーサーを定義 ▼▼▼
     function parseTSV(text) {
         const lines = text.trim().replace(/\r/g, '').split('\n');
         if (lines.length < 2) return [];
-        const headers = lines[0].split('\t');
+        const headers = lines[0].split('\t').map(h => h.trim());
         const data = lines.slice(1).map(line => {
             const values = line.split('\t');
             const obj = {};
             headers.forEach((header, i) => {
-                // TSVでは値が引用符で囲まれることは稀なので、単純にトリムする
-                obj[header.trim()] = values[i] ? values[i].trim() : '';
+                obj[header] = values[i] ? values[i].trim() : '';
             });
             return obj;
         });
@@ -283,7 +281,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             return parseTSV(cleanText);
         }
         
-        // CSVパーサー（堅牢版）
         const lines = cleanText.trim().replace(/\r/g, '').split('\n');
         if (lines.length < 2) return [];
         const headerLine = lines[0];
@@ -338,19 +335,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             loadingStatus.textContent = 'ペルソナデータを読み込み中...';
             personaData = await fetchAndParse('./milli_persona.csv');
 
-            // ▼▼▼ TSVファイルを読み込むように変更 ▼▼▼
             loadingStatus.textContent = '口コミデータを読み込み中...';
             complainData = await fetchAndParse('./milli_complain.tsv', 'tsv');
 
             loadingStatus.textContent = '追加データを読み込み中...';
-            const adviceResponse = await fetch('./tifo_advice.txt').catch(e => null);
+            const adviceResponse = await fetch('../tifo_advice.txt').catch(e => null);
             
             if (surveyData.length === 0) throw new Error("No valid data rows found in milli_score.csv.");
             scoreFacilityKey = Object.keys(surveyData[0])[0];
             personaFacilityKey = Object.keys(personaData[0])[0];
             
             surveyData = surveyData.filter(row => row && row[scoreFacilityKey] && String(row[scoreFacilityKey]).trim() !== '');
-            surveyData.sort((a, b) => (b['全回答数'] ?? 0) - (a['全回答数'] ?? 0));
+            surveyData.sort((a, b) => (Number(b['全回答数']) || 0) - (Number(a['全回答数']) || 0));
             
             if (adviceResponse && adviceResponse.ok) {
                 const adviceText = await adviceResponse.text();
@@ -378,7 +374,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.addEventListener('hashchange', handleRouteChange);
     disclaimerButton.addEventListener('click', async () => {
         try {
-            const response = await fetch('./credit.txt');
+            const response = await fetch('../credit.txt');
             if (!response.ok) throw new Error('File not found');
             const text = await response.text();
             document.getElementById('disclaimer-text').innerHTML = text.replace(/\n/g, '<br>');
