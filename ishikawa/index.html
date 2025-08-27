@@ -322,7 +322,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.addEventListener('hashchange', handleRouteChange);
     disclaimerButton.addEventListener('click', async () => {
         try {
-            const response = await fetch('./credit.txt');
+            const response = await fetch('../credit.txt');
             if (!response.ok) throw new Error('File not found');
             const text = await response.text();
             document.getElementById('disclaimer-text').innerHTML = text.replace(/\n/g, '<br>');
