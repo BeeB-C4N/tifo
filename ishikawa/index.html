@@ -254,20 +254,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     const disclaimerModal = document.getElementById('disclaimer-modal');
     const closeModalButton = document.getElementById('close-modal-button');
     
-    function parseCSV(text) {
+    // ▼▼▼ TSVパーサーを定義 ▼▼▼
+    function parseTSV(text) {
         const lines = text.trim().replace(/\r/g, '').split('\n');
         if (lines.length < 2) return [];
+        const headers = lines[0].split('\t');
+        const data = lines.slice(1).map(line => {
+            const values = line.split('\t');
+            const obj = {};
+            headers.forEach((header, i) => {
+                // TSVでは値が引用符で囲まれることは稀なので、単純にトリムする
+                obj[header.trim()] = values[i] ? values[i].trim() : '';
+            });
+            return obj;
+        });
+        return data;
+    }
 
+    async function fetchAndParse(url, format = 'csv') {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to load ${url}: ${response.statusText}`);
+        }
+        const text = await response.text();
+        const cleanText = text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
+        
+        if (format === 'tsv') {
+            return parseTSV(cleanText);
+        }
+        
+        // CSVパーサー（堅牢版）
+        const lines = cleanText.trim().replace(/\r/g, '').split('\n');
+        if (lines.length < 2) return [];
         const headerLine = lines[0];
         const regex = /(?:^|,)(?:"([^"]*(?:""[^"]*)*)"|([^,]*))/g;
-        
         const headers = [];
         let match;
         while(match = regex.exec(headerLine)) {
             let value = match[1] ? match[1].replace(/""/g, '"') : match[2];
             headers.push(value.trim());
         }
-
         const data = lines.slice(1).map(line => {
             const obj = {};
             let i = 0;
@@ -283,18 +309,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             return obj;
         });
         return data;
-    }
-
-    async function fetchAndParseCSV(url) {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Failed to load ${url}: ${response.statusText}`);
-        }
-        const text = await response.text();
-        if (text.charCodeAt(0) === 0xFEFF) {
-            return parseCSV(text.slice(1));
-        }
-        return parseCSV(text);
     }
 
     const handleRouteChange = () => {
@@ -316,22 +330,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function loadData() {
         try {
-            // ▼▼▼ 読み込み処理を段階的に変更 ▼▼▼
             const loadingStatus = loadingMessage.querySelector('p');
 
             loadingStatus.textContent = 'スコアデータを読み込み中...';
-            surveyData = await fetchAndParseCSV('./milli_score.csv');
+            surveyData = await fetchAndParse('./milli_score.csv');
 
             loadingStatus.textContent = 'ペルソナデータを読み込み中...';
-            personaData = await fetchAndParseCSV('./milli_persona.csv');
+            personaData = await fetchAndParse('./milli_persona.csv');
 
+            // ▼▼▼ TSVファイルを読み込むように変更 ▼▼▼
             loadingStatus.textContent = '口コミデータを読み込み中...';
-            complainData = await fetchAndParseCSV('./milli_complain.csv');
+            complainData = await fetchAndParse('./milli_complain.tsv', 'tsv');
 
             loadingStatus.textContent = '追加データを読み込み中...';
             const adviceResponse = await fetch('./tifo_advice.txt').catch(e => null);
-            // ▲▲▲ ここまで ▲▲▲
-
+            
             if (surveyData.length === 0) throw new Error("No valid data rows found in milli_score.csv.");
             scoreFacilityKey = Object.keys(surveyData[0])[0];
             personaFacilityKey = Object.keys(personaData[0])[0];
