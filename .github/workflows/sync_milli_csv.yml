@@ -41,12 +41,17 @@ jobs:
           git diff --name-only || true
       - name: Commit & push if changed
         run: |
+          set -e
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if ! git diff --quiet; then
-            git add -A
+
+          # 先にステージングして、未追跡も含めて差分を見る
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
             git commit -m "chore: daily sync CSV from Sheets ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))"
             git push
-          else
-            echo "No changes."
           fi
+
