@@ -301,7 +301,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const [scoreData, personaCsvData, complainCsvData, adviceResponse] = await Promise.all([
                 fetchAndParseCSV('./milli_score.csv'),
                 fetchAndParseCSV('./milli_persona.csv'),
-                fetchAndParseCSV('../milli_complain.csv'),
+                fetchAndParseCSV('./milli_complain.csv'),
                 fetch('../tifo_advice.txt').catch(e => null)
             ]);
 
