@@ -1,0 +1,47 @@
+name: Sync milli CSV (public Sheets)
+
+on:
+  schedule:
+    - cron: '15 20 * * *'  # 毎日 05:15 JST
+  workflow_dispatch:        # 手動実行も可能
+
+permissions:
+  contents: write           # コミットに必要
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      SCORE_ID: 1Dmv06IhjwIR8nhoKPF158GsyGAF39CQIijIi0k134oA
+      PERSONA_ID: 1z-vz7o91NNwZcz_lCy0WoN2vKoX87wKiT25GPNe6Hh4
+      SCORE_GID: "0"
+      PERSONA_GID: "0"
+      OUT_SCORE: tifo/ishikawa/milli_score.csv
+      OUT_PERSONA: tifo/ishikawa/milli_persona.csv
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch CSVs with retry & content check
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "$OUT_SCORE")"
+          fetch () {
+            id="$1"; gid="$2"; out="$3"; tmp="$(mktemp)"
+            curl -fsSL --retry 5 --retry-delay 3 \
+              "https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}" -o "$tmp"
+            head -c 512 "$tmp" | grep -qi "<html" && { echo "ERROR: got HTML"; exit 1; }
+            mv "$tmp" "$out"
+            echo "Saved $out"
+          }
+          fetch "$SCORE_ID" "$SCORE_GID" "$OUT_SCORE"
+          fetch "$PERSONA_ID" "$PERSONA_GID" "$OUT_PERSONA"
+      - name: Commit & push if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet; then
+            git add -A
+            git commit -m "chore: daily sync CSV from Sheets ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))"
+            git push
+          else
+            echo "No changes."
+          fi
