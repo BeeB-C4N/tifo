@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Papa Parseライブラリを読み込み -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
     <style>
         :root {
@@ -85,6 +86,7 @@
             font-weight: 600;
             color: #A0AEC0;
             transition: all 0.2s ease;
+            flex-shrink: 0; /* スマホ表示でタブが縮まないように */
         }
         .feedback-tab-button:hover {
             background-color: #F7FAFC;
@@ -107,6 +109,7 @@
     </style>
 </head>
 <body>
+    <!-- ホーム画面 -->
     <div id="home-screen" class="min-h-screen flex flex-col items-center justify-center p-4 text-center">
         <div class="flex items-center justify-center gap-4 mb-4">
             <div class="w-24 h-24">
@@ -129,6 +132,7 @@
         </div>
     </div>
 
+    <!-- 分析結果画面 -->
     <div id="analysis-screen" class="hidden p-4 md:p-8 max-w-5xl mx-auto">
         <header class="flex items-center justify-between mb-8">
             <h1 id="facility-title" class="text-3xl font-bold"></h1>
@@ -177,11 +181,13 @@
                 </template>
             </section>
             
+            <!-- ▼▼▼ ここから新しいセクション ▼▼▼ -->
             <section id="customer-voice-section">
                 <h2 class="text-2xl font-bold mb-4 flex items-center">過去１か月の観光客の声</h2>
                 <div class="tifo-card !p-0 overflow-hidden">
+                    <!-- タブナビゲーション -->
                     <div class="px-6 border-b border-gray-200">
-                        <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                        <nav class="-mb-px flex space-x-2 overflow-x-auto" aria-label="Tabs">
                             <button data-tab="service" class="feedback-tab-button active">商品・サービス</button>
                             <button data-tab="facility" class="feedback-tab-button">施設全体</button>
                             <button data-tab="inconvenience" class="feedback-tab-button">不便な点</button>
@@ -189,6 +195,7 @@
                             <button data-tab="nps" class="feedback-tab-button">NPSの理由</button>
                         </nav>
                     </div>
+                    <!-- タブコンテンツ -->
                     <div class="p-6 bg-gray-50">
                         <div id="feedback-content-service" class="feedback-content custom-scrollbar space-y-4"></div>
                         <div id="feedback-content-facility" class="feedback-content custom-scrollbar space-y-4 hidden"></div>
@@ -198,6 +205,8 @@
                     </div>
                 </div>
             </section>
+            <!-- ▲▲▲ ここまで ▲▲▲ -->
+
             <section>
                 <h2 class="text-2xl font-bold mb-4 flex items-center">グループ別 来訪者TOP5</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -224,6 +233,7 @@
         </main>
     </div>
 
+    <!-- 免責事項モーダル -->
     <div id="disclaimer-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">免責事項</h2>
@@ -236,10 +246,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
     let surveyData = [];
     let personaData = [];
-    let complainData = []; // ▼▼▼ 追加 ▼▼▼
+    let complainData = [];
     let scoreFacilityKey = '';
     let personaFacilityKey = '';
-    let complainFacilityKey = '施設'; // ▼▼▼ 追加 ▼▼▼
+    let complainFacilityKey = '施設';
     let adviceLines = [];
 
     const homeScreen = document.getElementById('home-screen');
@@ -261,7 +271,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 header: true,
                 skipEmptyLines: true,
                 complete: (results) => resolve(results.data),
-                error: (error) => reject(new Error(`Failed to load or parse ${url}: ${error.message}`))
+                error: (error, file) => reject(new Error(`Failed to load or parse ${url}: ${error.message}`))
             });
         });
     }
@@ -285,7 +295,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function loadData() {
         try {
-            // ▼▼▼ milli_complain.csvの読み込みを追加 ▼▼▼
             const [scoreData, personaCsvData, complainCsvData, adviceResponse] = await Promise.all([
                 fetchAndParseCSV('./milli_score.csv'),
                 fetchAndParseCSV('./milli_persona.csv'),
@@ -295,7 +304,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             surveyData = scoreData;
             personaData = personaCsvData;
-            complainData = complainCsvData; // ▼▼▼ データを格納 ▼▼▼
+            complainData = complainCsvData;
 
             if (surveyData.length === 0) throw new Error("No valid data rows found in milli_score.csv.");
             scoreFacilityKey = Object.keys(surveyData[0])[0];
@@ -445,9 +454,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         personaSection.classList.remove('hidden');
     }
 
-    // ▼▼▼ ここから新しい関数 ▼▼▼
     function displayCustomerFeedback(facilityName) {
-        // --- アイコンと色の定義 ---
         const satisfactionInfo = {
             'とても満足': { icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'green', label: 'とても満足' },
             '満足': { icon: 'M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'blue', label: '満足' },
@@ -469,7 +476,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             purple: { icon: 'text-purple-500', label: 'text-purple-800', bg: 'bg-purple-100' },
         };
 
-        // 1. データのフィルタリングとソート
         const oneMonthAgo = new Date();
         oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
@@ -481,7 +487,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             })
             .sort((a, b) => new Date(b['タイムスタンプ']) - new Date(a['タイムスタンプ']));
 
-        // 2. コメントをカテゴリ分け
         const feedback = { service: [], facility: [], inconvenience: [], request: [], nps: [] };
         
         const columnMap = {
@@ -506,7 +511,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (row[columnMap.nps.text]) feedback.nps.push({ ...commonData, text: row[columnMap.nps.text] });
         });
 
-        // 3. HTMLを生成して描画
         const createCommentCard = (comment, type) => {
             let infoKey = type === 'request' || type === 'nps' ? type : comment.satisfaction;
             const info = satisfactionInfo[infoKey];
@@ -544,12 +548,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderComments('feedback-content-request', feedback.request, 'request');
         renderComments('feedback-content-nps', feedback.nps, 'nps');
 
-        // 4. タブの切り替えロジック
         const tabs = document.querySelectorAll('.feedback-tab-button');
         const contents = document.querySelectorAll('.feedback-content');
         
         tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
                 tabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 
@@ -560,10 +564,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         
         // 初期状態で最初のタブをアクティブに
-        tabs[0].click(); 
+        if (tabs.length > 0) {
+            tabs[0].classList.add('active');
+            contents.forEach(c => c.classList.add('hidden'));
+            document.getElementById(`feedback-content-${tabs[0].dataset.tab}`).classList.remove('hidden');
+        }
     }
-    // ▲▲▲ ここまで ▲▲▲
-
 
     function displayAnalysis(data) {
         const facilityName = data[scoreFacilityKey];
@@ -593,7 +599,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         displayPersonaAnalysis(data, facilityName);
 
-        // ▼▼▼ 新しい関数を呼び出す ▼▼▼
         displayCustomerFeedback(facilityName);
         
         const ageGroups = { '10代': data['10代'], '20代': data['20代'], '30代': data['30代'], '40代': data['40代'], '50代': data['50代'], '60代': data['60代'], '70代': data['70代'], '80代': data['80代'], '90代': data['90代'], '100代': data['100代'] };
