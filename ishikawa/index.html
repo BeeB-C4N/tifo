@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
     <style>
         :root {
             --tifo-bg: #F7FAFC;
@@ -76,10 +77,36 @@
         .nps-bar-value { position: absolute; top: 50%; transform: translateY(-50%); width: 0.75rem; height: 0.75rem; background-color: var(--tifo-text); border-radius: 50%; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.3); transition: left 0.5s ease-in-out; }
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; }
         .modal-content { background-color: white; padding: 2rem; border-radius: 1rem; max-width: 90%; width: 600px; max-height: 80vh; overflow-y: auto; }
+        
+        /* ▼▼▼ 追加したCSS ▼▼▼ */
+        .feedback-tab-button {
+            padding: 0.5rem 0.75rem;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            color: #A0AEC0;
+            transition: all 0.2s ease;
+        }
+        .feedback-tab-button:hover {
+            background-color: #F7FAFC;
+            color: #4A5568;
+        }
+        .feedback-tab-button.active {
+            color: var(--tifo-primary);
+            border-bottom-color: var(--tifo-primary);
+        }
+        .feedback-content {
+            height: 40rem; /* カードの高さを固定 */
+            overflow-y: auto;
+        }
+        /* カスタムスクロールバー */
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        /* ▲▲▲ ここまで ▲▲▲ */
     </style>
 </head>
 <body>
-    <!-- ホーム画面 -->
     <div id="home-screen" class="min-h-screen flex flex-col items-center justify-center p-4 text-center">
         <div class="flex items-center justify-center gap-4 mb-4">
             <div class="w-24 h-24">
@@ -90,7 +117,7 @@
             </div>
             <img src="../tifo.png" alt="TIFOちゃん" class="h-20 w-20 object-contain">
         </div>
-        <p class="text-lg text-gray-600 mb-8">観光AIアドバイザリー</p>
+        <p class="text-lg text-gray-600 mb-8">観光猫型AIアドバイザリー</p>
         <div id="loading-message" class="text-gray-600"><p>データを読み込んでいます...</p></div>
         <div id="main-content" class="w-full max-w-md hidden">
             <label for="facility-select" class="block mb-2 text-gray-700 font-bold">分析したい施設を選んでにゃ🐾</label>
@@ -102,7 +129,6 @@
         </div>
     </div>
 
-    <!-- 分析結果画面 -->
     <div id="analysis-screen" class="hidden p-4 md:p-8 max-w-5xl mx-auto">
         <header class="flex items-center justify-between mb-8">
             <h1 id="facility-title" class="text-3xl font-bold"></h1>
@@ -125,14 +151,9 @@
             </section>
             
             <section id="persona-section" class="tifo-card hidden">
-                <h2 class="text-2xl font-bold mb-2 flex items-center gap-3">
-                    ペルソナ分析
-                </h2>
-                <p class="text-gray-600 mb-6">
-                    あなたの施設に最も回答している顧客グループTOP3です。
-                </p>
-                <div id="persona-container" class="space-y-6">
-                </div>
+                <h2 class="text-2xl font-bold mb-2 flex items-center gap-3">ペルソナ分析</h2>
+                <p class="text-gray-600 mb-6">あなたの施設に最も回答している顧客グループTOP3です。</p>
+                <div id="persona-container" class="space-y-6"></div>
                 <template id="persona-template">
                     <div class="border border-gray-200 rounded-xl p-4">
                         <div class="flex items-center gap-4 mb-3">
@@ -148,16 +169,35 @@
                             </div>
                             <div class="space-y-2">
                                 <label class="font-bold text-gray-700">回答者全体における割合（確度）</label>
-                                <div class="progress-bar-bg">
-                                    <div class="progress-bar" style="width: 0%;"></div>
-                                </div>
+                                <div class="progress-bar-bg"><div class="progress-bar" style="width: 0%;"></div></div>
                                 <p class="persona-counts text-right text-sm text-gray-500"></p>
                             </div>
                         </div>
                     </div>
                 </template>
             </section>
-
+            
+            <section id="customer-voice-section">
+                <h2 class="text-2xl font-bold mb-4 flex items-center">過去１か月の観光客の声</h2>
+                <div class="tifo-card !p-0 overflow-hidden">
+                    <div class="px-6 border-b border-gray-200">
+                        <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                            <button data-tab="service" class="feedback-tab-button active">商品・サービス</button>
+                            <button data-tab="facility" class="feedback-tab-button">施設全体</button>
+                            <button data-tab="inconvenience" class="feedback-tab-button">不便な点</button>
+                            <button data-tab="request" class="feedback-tab-button">リクエスト</button>
+                            <button data-tab="nps" class="feedback-tab-button">NPSの理由</button>
+                        </nav>
+                    </div>
+                    <div class="p-6 bg-gray-50">
+                        <div id="feedback-content-service" class="feedback-content custom-scrollbar space-y-4"></div>
+                        <div id="feedback-content-facility" class="feedback-content custom-scrollbar space-y-4 hidden"></div>
+                        <div id="feedback-content-inconvenience" class="feedback-content custom-scrollbar space-y-4 hidden"></div>
+                        <div id="feedback-content-request" class="feedback-content custom-scrollbar space-y-4 hidden"></div>
+                        <div id="feedback-content-nps" class="feedback-content custom-scrollbar space-y-4 hidden"></div>
+                    </div>
+                </div>
+            </section>
             <section>
                 <h2 class="text-2xl font-bold mb-4 flex items-center">グループ別 来訪者TOP5</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -174,17 +214,16 @@
             <section>
                  <h2 class="text-2xl font-bold mb-4 flex items-center">Tifoちゃんからのアドバイス</h2>
                  <div class="flex items-start gap-4">
-                     <img src="../tifo.png" alt="TIFOちゃん" class="h-32 w-32 object-contain flex-shrink-0">
-                     <div class="bg-white p-4 rounded-r-xl rounded-bl-xl relative w-full">
-                         <div class="absolute left-[-10px] top-[15px] w-0 h-0 border-t-[10px] border-t-transparent border-r-[10px] border-r-white border-b-[10px] border-b-transparent"></div>
-                         <p id="tifo-advice-text" class="text-gray-700"></p>
-                     </div>
+                      <img src="../tifo.png" alt="TIFOちゃん" class="h-32 w-32 object-contain flex-shrink-0">
+                      <div class="bg-white p-4 rounded-r-xl rounded-bl-xl relative w-full">
+                           <div class="absolute left-[-10px] top-[15px] w-0 h-0 border-t-[10px] border-t-transparent border-r-[10px] border-r-white border-b-[10px] border-b-transparent"></div>
+                           <p id="tifo-advice-text" class="text-gray-700"></p>
+                      </div>
                  </div>
             </section>
         </main>
     </div>
 
-    <!-- 免責事項モーダル -->
     <div id="disclaimer-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">免責事項</h2>
@@ -197,8 +236,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
     let surveyData = [];
     let personaData = [];
+    let complainData = []; // ▼▼▼ 追加 ▼▼▼
     let scoreFacilityKey = '';
     let personaFacilityKey = '';
+    let complainFacilityKey = '施設'; // ▼▼▼ 追加 ▼▼▼
     let adviceLines = [];
 
     const homeScreen = document.getElementById('home-screen');
@@ -212,44 +253,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const disclaimerModal = document.getElementById('disclaimer-modal');
     const closeModalButton = document.getElementById('close-modal-button');
     
-    function parseCSV(text) {
-        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-        
-        const lines = text.trim().split(/\r?\n/);
-        const regex = /(?:^|,)(?:"([^"]*(?:""[^"]*)*)"|([^,]*))/g;
-        
-        const headers = [];
-        let match;
-        while(match = regex.exec(lines[0])) {
-            let value = match[1] !== undefined ? match[1].replace(/""/g, '"') : match[2];
-            headers.push(value.trim());
-        }
-
-        const facilityKey = headers[0];
-        if (!facilityKey) throw new Error("CSV file has no headers.");
-
-        const data = lines.slice(1).map(line => {
-            const obj = {};
-            let i = 0;
-            regex.lastIndex = 0;
-            while(match = regex.exec(line)) {
-                if(i < headers.length) {
-                    const header = headers[i];
-                    let value = match[1] !== undefined ? match[1].replace(/""/g, '"') : match[2];
-                    
-                    if (value === null || value.trim() === '') {
-                        obj[header] = null;
-                    } else {
-                        const numValue = Number(value);
-                        obj[header] = !isNaN(numValue) && value.trim() !== '' ? numValue : value;
-                    }
-                    i++;
-                }
-            }
-            return obj;
+    // PapaParseでCSVを非同期に読み込む関数
+    function fetchAndParseCSV(url) {
+        return new Promise((resolve, reject) => {
+            Papa.parse(url, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: (results) => resolve(results.data),
+                error: (error) => reject(new Error(`Failed to load or parse ${url}: ${error.message}`))
+            });
         });
-        
-        return { data, key: facilityKey };
     }
 
     const handleRouteChange = () => {
@@ -271,31 +285,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function loadData() {
         try {
-            const [scoreResponse, personaResponse, adviceResponse] = await Promise.all([
-                fetch('./milli_score.csv'),
-                fetch('./milli_persona.csv'),
+            // ▼▼▼ milli_complain.csvの読み込みを追加 ▼▼▼
+            const [scoreData, personaCsvData, complainCsvData, adviceResponse] = await Promise.all([
+                fetchAndParseCSV('./milli_score.csv'),
+                fetchAndParseCSV('./milli_persona.csv'),
+                fetchAndParseCSV('../milli_complain.csv'),
                 fetch('../tifo_advice.txt').catch(e => null)
             ]);
 
-            if (!scoreResponse.ok) throw new Error(`milli_score.csv failed to load: ${scoreResponse.statusText}`);
-            if (!personaResponse.ok) throw new Error(`milli_persona.csv failed to load: ${personaResponse.statusText}`);
-            
-            const scoreText = await scoreResponse.text();
-            const scoreResult = parseCSV(scoreText);
-            surveyData = scoreResult.data;
-            scoreFacilityKey = scoreResult.key;
+            surveyData = scoreData;
+            personaData = personaCsvData;
+            complainData = complainCsvData; // ▼▼▼ データを格納 ▼▼▼
+
+            if (surveyData.length === 0) throw new Error("No valid data rows found in milli_score.csv.");
+            scoreFacilityKey = Object.keys(surveyData[0])[0];
+            personaFacilityKey = Object.keys(personaData[0])[0];
             
             surveyData = surveyData.filter(row => row && row[scoreFacilityKey] && String(row[scoreFacilityKey]).trim() !== '');
-            
             surveyData.sort((a, b) => (b['全回答数'] ?? 0) - (a['全回答数'] ?? 0));
             
-            if (surveyData.length === 0) throw new Error("No valid data rows found in milli_score.csv.");
-            
-            const personaText = await personaResponse.text();
-            const personaResult = parseCSV(personaText);
-            personaData = personaResult.data;
-            personaFacilityKey = personaResult.key;
-
             if (adviceResponse && adviceResponse.ok) {
                 const adviceText = await adviceResponse.text();
                 adviceLines = adviceText.trim().split(/\r?\n/).filter(line => line.trim() !== '');
@@ -342,7 +350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return { rank, total: surveyData.length };
     }
     function updateSatisfactionCard(idPrefix, score, dataKey) {
-        const scoreValue = score ?? 0;
+        const scoreValue = (score && !isNaN(score)) ? Number(score) : 0;
         document.getElementById(`${idPrefix}`).textContent = scoreValue.toFixed(2);
         document.getElementById(`${idPrefix}-bar`).style.width = `${(scoreValue / 5) * 100}%`;
         const rankInfo = getRank(score, dataKey);
@@ -366,7 +374,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             listElement.appendChild(li);
         });
     }
-
+    
     function displayPersonaAnalysis(scoreData, facilityName) {
         const personaSection = document.getElementById('persona-section');
         const container = document.getElementById('persona-container');
@@ -422,14 +430,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             card.querySelector('.persona-companion-icon').textContent = companionIcons[persona.companion] || companionIcons.default;
             card.querySelector('.persona-age-icon').textContent = ageIcons[persona.age] || ageIcons.default;
             
-            // ▼▼▼ 確度バーの計算ロジックを修正 ▼▼▼
             const certaintyPercent = totalAnswers > 0 ? (persona.count / totalAnswers) * 100 : 0;
             const barWidthPercent = Math.min(100, (certaintyPercent / 25) * 100);
             
             const progressBar = card.querySelector('.progress-bar');
             progressBar.style.width = `${barWidthPercent}%`;
-            progressBar.textContent = `${certaintyPercent.toFixed(1)}%`; // テキストは実際の割合を表示
-            // ▲▲▲ ここまで ▲▲▲
+            progressBar.textContent = `${certaintyPercent.toFixed(1)}%`;
             
             card.querySelector('.persona-counts').textContent = `該当カウント: ${persona.count}件 / 全回答数 ${totalAnswers}件`;
             
@@ -438,6 +444,126 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         personaSection.classList.remove('hidden');
     }
+
+    // ▼▼▼ ここから新しい関数 ▼▼▼
+    function displayCustomerFeedback(facilityName) {
+        // --- アイコンと色の定義 ---
+        const satisfactionInfo = {
+            'とても満足': { icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'green', label: 'とても満足' },
+            '満足': { icon: 'M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'blue', label: '満足' },
+            'どちらでもない': { icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'yellow', label: 'どちらでもない' },
+            '不満': { icon: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'red', label: '不満' },
+            'とても不満': { icon: 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636', color: 'gray', label: 'とても不満' },
+            '感じた': { icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', color: 'orange', label: '不便を感じた' },
+            'request': { icon: 'M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z', color: 'cyan', label: 'リクエスト' },
+            'nps': { icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z', color: 'purple', label: 'NPSの理由' },
+        };
+        const colorClasses = {
+            green: { icon: 'text-green-500', label: 'text-green-800', bg: 'bg-green-100' },
+            blue: { icon: 'text-blue-500', label: 'text-blue-800', bg: 'bg-blue-100' },
+            yellow: { icon: 'text-yellow-500', label: 'text-yellow-800', bg: 'bg-yellow-100' },
+            red: { icon: 'text-red-500', label: 'text-red-800', bg: 'bg-red-100' },
+            gray: { icon: 'text-gray-500', label: 'text-gray-800', bg: 'bg-gray-200' },
+            orange: { icon: 'text-orange-500', label: 'text-orange-800', bg: 'bg-orange-100' },
+            cyan: { icon: 'text-cyan-500', label: 'text-cyan-800', bg: 'bg-cyan-100' },
+            purple: { icon: 'text-purple-500', label: 'text-purple-800', bg: 'bg-purple-100' },
+        };
+
+        // 1. データのフィルタリングとソート
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+        const filteredData = complainData
+            .filter(row => {
+                if (row[complainFacilityKey] !== facilityName) return false;
+                const timestamp = new Date(row['タイムスタンプ']);
+                return !isNaN(timestamp) && timestamp >= oneMonthAgo;
+            })
+            .sort((a, b) => new Date(b['タイムスタンプ']) - new Date(a['タイムスタンプ']));
+
+        // 2. コメントをカテゴリ分け
+        const feedback = { service: [], facility: [], inconvenience: [], request: [], nps: [] };
+        
+        const columnMap = {
+            service: { text: '上記満足度の理由につい具体的に教えてください。(サービス)', satisfaction: '当施設 における、商品・サービスの満足度をお答えください' },
+            facility: { text: '上記満足度の理由につい具体的に教えてください。(施設全体)', satisfaction: '当施設 における、施設全体の満足度をお答えください。' },
+            inconvenience: { text: '上記不便を感じたり、困ったことについて具体的に教えてください', satisfaction: '当施設 において、不便を感じたり困ったことはありましたか。' },
+            request: { text: 'あなたが求めている 当施設 の飲食、土産、アクティビティについて、ご自由にご意見をお聞かせください' },
+            nps: { text: '今回の旅行またはお出かけにおいて、特に人に薦めたいと感じたものとその理由について具体的に教えてください。' },
+        };
+
+        filteredData.forEach(row => {
+            const commonData = {
+                year: row['生まれた年をお答えください'] || '不明',
+                prefecture: row['お住いの都道府県をお答えください'] || '不明',
+                gender: row['性別をお答えください'] || '不明'
+            };
+
+            if (row[columnMap.service.text]) feedback.service.push({ ...commonData, text: row[columnMap.service.text], satisfaction: row[columnMap.service.satisfaction] });
+            if (row[columnMap.facility.text]) feedback.facility.push({ ...commonData, text: row[columnMap.facility.text], satisfaction: row[columnMap.facility.satisfaction] });
+            if (row[columnMap.inconvenience.satisfaction] === '感じた' && row[columnMap.inconvenience.text]) feedback.inconvenience.push({ ...commonData, text: row[columnMap.inconvenience.text], satisfaction: '感じた' });
+            if (row[columnMap.request.text]) feedback.request.push({ ...commonData, text: row[columnMap.request.text] });
+            if (row[columnMap.nps.text]) feedback.nps.push({ ...commonData, text: row[columnMap.nps.text] });
+        });
+
+        // 3. HTMLを生成して描画
+        const createCommentCard = (comment, type) => {
+            let infoKey = type === 'request' || type === 'nps' ? type : comment.satisfaction;
+            const info = satisfactionInfo[infoKey];
+            if (!info || !comment.text) return '';
+            
+            const colors = colorClasses[info.color];
+            return `
+                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0 mt-1">
+                            <svg class="w-6 h-6 ${colors.icon}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${info.icon}"></path></svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="px-2 py-0.5 text-xs font-semibold rounded-full ${colors.bg} ${colors.label} inline-block">${info.label}</p>
+                            <p class="mt-2 text-gray-700 text-sm leading-relaxed">${comment.text}</p>
+                            <p class="mt-3 text-xs text-gray-500">${comment.year}年生まれ・${comment.prefecture}在住・${comment.gender}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const renderComments = (containerId, comments, type) => {
+            const container = document.getElementById(containerId);
+            if (comments.length > 0) {
+                container.innerHTML = comments.map(c => createCommentCard(c, type)).join('');
+            } else {
+                container.innerHTML = `<div class="text-center text-gray-500 py-16">該当するコメントはありません。</div>`;
+            }
+        };
+
+        renderComments('feedback-content-service', feedback.service, 'service');
+        renderComments('feedback-content-facility', feedback.facility, 'facility');
+        renderComments('feedback-content-inconvenience', feedback.inconvenience, 'inconvenience');
+        renderComments('feedback-content-request', feedback.request, 'request');
+        renderComments('feedback-content-nps', feedback.nps, 'nps');
+
+        // 4. タブの切り替えロジック
+        const tabs = document.querySelectorAll('.feedback-tab-button');
+        const contents = document.querySelectorAll('.feedback-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                contents.forEach(c => c.classList.add('hidden'));
+                const contentId = `feedback-content-${tab.dataset.tab}`;
+                document.getElementById(contentId).classList.remove('hidden');
+            });
+        });
+        
+        // 初期状態で最初のタブをアクティブに
+        tabs[0].click(); 
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
 
     function displayAnalysis(data) {
         const facilityName = data[scoreFacilityKey];
@@ -466,6 +592,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateSatisfactionCard('trip-satisfaction', data['旅全体満足度'], '旅全体満足度');
         
         displayPersonaAnalysis(data, facilityName);
+
+        // ▼▼▼ 新しい関数を呼び出す ▼▼▼
+        displayCustomerFeedback(facilityName);
         
         const ageGroups = { '10代': data['10代'], '20代': data['20代'], '30代': data['30代'], '40代': data['40代'], '50代': data['50代'], '60代': data['60代'], '70代': data['70代'], '80代': data['80代'], '90代': data['90代'], '100代': data['100代'] };
         const genderGroups = { '男性': data['男性'], '女性': data['女性'] };
