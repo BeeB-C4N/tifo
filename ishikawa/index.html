@@ -204,7 +204,7 @@
                     <div class="tifo-card"><h3 class="text-lg font-bold mb-4">🚻 性別</h3><ul id="gender-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card"><h3 class="text-lg font-bold mb-4">🎂 年代</h3><ul id="age-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card"><h3 class="text-lg font-bold mb-4">🌙 宿泊日数</h3><ul id="stay-duration-ranking" class="space-y-3"></ul></div>
-                    <div class="tifo-card"><h3 class="text-lg font-bold mb-4">� 同伴者</h3><ul id="companion-ranking" class="space-y-3"></ul></div>
+                    <div class="tifo-card"><h3 class="text-lg font-bold mb-4">👪 同伴者</h3><ul id="companion-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card col-span-1 md:col-span-2"><h3 class="text-lg font-bold mb-4">✈️ 旅の目的</h3><ul id="purpose-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card col-span-1 md:col-span-2"><h3 class="text-lg font-bold mb-4">💰 世帯年収</h3><ul id="income-ranking" class="space-y-3"></ul></div>
                     <div class="tifo-card col-span-1 md:col-span-2"><h3 class="text-lg font-bold mb-4">🗾 都道府県</h3><ul id="prefecture-ranking" class="space-y-3"></ul></div>
@@ -240,7 +240,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     let complainData = [];
     let scoreFacilityKey = '';
     let personaFacilityKey = '';
-    
     let adviceLines = [];
 
     const homeScreen = document.getElementById('home-screen');
@@ -271,27 +270,45 @@ document.addEventListener('DOMContentLoaded', async () => {
         GENDER: 34,
     };
 
-    function parseData(text, delimiter) {
+    function parseCSVWithHeaders(text) {
         const lines = text.trim().replace(/\r/g, '').split('\n');
-        if (lines.length < 2) return { data: [], headers: [] };
-        const headers = lines[0].split(delimiter).map(h => h.trim());
+        if (lines.length < 2) return { data: [], key: '' };
+        const headerLine = lines[0];
+        const regex = /(?:^|,)(?:"([^"]*(?:""[^"]*)*)"|([^,]*))/g;
+        const headers = [];
+        let match;
+        while(match = regex.exec(headerLine)) {
+            let value = match[1] ? match[1].replace(/""/g, '"') : match[2];
+            headers.push(value.trim());
+        }
+        const facilityKey = headers[0];
         const data = lines.slice(1).map(line => {
-            const values = line.split(delimiter);
             const obj = {};
-            headers.forEach((header, i) => {
-                obj[header] = values[i] ? values[i].trim() : '';
-            });
+            let i = 0;
+            regex.lastIndex = 0;
+            while(match = regex.exec(line)) {
+                if(i < headers.length) {
+                    const header = headers[i];
+                    let value = match[1] ? match[1].replace(/""/g, '"') : match[2];
+                    if (value) {
+                        const numValue = Number(value);
+                        obj[header] = !isNaN(numValue) && value.trim() !== '' ? numValue : value.trim();
+                    } else {
+                        obj[header] = null;
+                    }
+                    i++;
+                }
+            }
             return obj;
         });
-        return { data, headers };
-    }
-    
-    function parseDataAsArrays(text, delimiter) {
-        const lines = text.trim().replace(/\r/g, '').split('\n');
-        if (lines.length < 2) return [];
-        return lines.slice(1).map(line => line.split(delimiter).map(val => val.trim()));
+        return { data, key: facilityKey };
     }
 
+    function parseTSVAsArrays(text) {
+        const lines = text.trim().replace(/\r/g, '').split('\n');
+        if (lines.length < 2) return [];
+        return lines.slice(1).map(line => line.split('\t').map(val => val.trim()));
+    }
 
     async function fetchAndParse(url, format = 'csv') {
         const response = await fetch(url);
@@ -299,12 +316,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const text = await response.text();
         const cleanText = text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
         
-        if (format === 'tsv-array') { // 列番号でアクセスするために配列としてパース
-            return parseDataAsArrays(cleanText, '\t');
+        if (format === 'tsv-array') {
+            return parseTSVAsArrays(cleanText);
         }
-        
-        const delimiter = format === 'tsv' ? '\t' : ',';
-        return parseData(cleanText, delimiter).data;
+        return parseCSVWithHeaders(cleanText);
     }
 
     const handleRouteChange = () => {
@@ -329,10 +344,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const loadingStatus = loadingMessage.querySelector('p');
 
             loadingStatus.textContent = 'スコアデータを読み込み中...';
-            surveyData = await fetchAndParse('./milli_score.csv');
+            const scoreResult = await fetchAndParse('./milli_score.csv');
+            surveyData = scoreResult.data;
+            scoreFacilityKey = scoreResult.key;
 
             loadingStatus.textContent = 'ペルソナデータを読み込み中...';
-            personaData = await fetchAndParse('./milli_persona.csv');
+            const personaResult = await fetchAndParse('./milli_persona.csv');
+            personaData = personaResult.data;
+            personaFacilityKey = personaResult.key;
 
             loadingStatus.textContent = '口コミデータを読み込み中...';
             complainData = await fetchAndParse('./milli_complain.tsv', 'tsv-array');
@@ -341,8 +360,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const adviceResponse = await fetch('../tifo_advice.txt').catch(e => null);
             
             if (surveyData.length === 0) throw new Error("No valid data rows found in milli_score.csv.");
-            scoreFacilityKey = Object.keys(surveyData[0])[0];
-            personaFacilityKey = Object.keys(personaData[0])[0];
             
             surveyData = surveyData.filter(row => row && row[scoreFacilityKey] && String(row[scoreFacilityKey]).trim() !== '');
             surveyData.sort((a, b) => (Number(b['全回答数']) || 0) - (Number(a['全回答数']) || 0));
@@ -681,4 +698,3 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 </body>
 </html>
-�
