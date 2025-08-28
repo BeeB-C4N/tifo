@@ -138,7 +138,8 @@
             <section>
                 <h2 class="text-2xl font-bold mb-4 flex items-center">基本スコア</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div class="tifo-card text-center"><h3 class="text-lg font-bold mb-2">全回答数</h3><p id="total-answers" class="text-6xl font-bold" style="color: var(--tifo-primary);"></p><div id="answer-trend" class="text-sm mt-2 flex items-center justify-center"></div><p id="total-answers-rank" class="text-sm text-gray-500 mt-3"></p></div>
+                    <!-- ▼▼▼ 前月比を削除 ▼▼▼ -->
+                    <div class="tifo-card text-center"><h3 class="text-lg font-bold mb-2">全回答数</h3><p id="total-answers" class="text-6xl font-bold" style="color: var(--tifo-primary);"></p><p id="total-answers-rank" class="text-sm text-gray-500 mt-3"></p></div>
                     <div class="tifo-card text-center"><h3 class="text-lg font-bold mb-2">❤️ NPS (顧客推奨度)</h3><p id="nps-score" class="text-6xl font-bold" style="color: var(--tifo-primary);"></p><p class="text-xs text-gray-500">(-100 ~ 100の範囲)</p><div class="w-full mt-3 relative"><div class="nps-bar-container"><div class="nps-bar-marker"></div><div id="nps-bar-value" class="nps-bar-value"></div></div></div><p id="nps-rank" class="text-sm text-gray-500 mt-3"></p></div>
                 </div>
                 <h2 class="text-2xl font-bold mb-4 flex items-center">各種満足度スコア</h2>
@@ -221,6 +222,10 @@
                       </div>
                  </div>
             </section>
+            <!-- ▼▼▼ 戻るボタンを追加 ▼▼▼ -->
+            <div class="mt-8 flex justify-center">
+                <button id="back-button-bottom" class="tifo-button">戻る</button>
+            </div>
         </main>
     </div>
 
@@ -247,13 +252,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const facilitySelect = document.getElementById('facility-select');
     const analyzeButton = document.getElementById('analyze-button');
     const backButton = document.getElementById('back-button');
+    const backButtonBottom = document.getElementById('back-button-bottom'); // ▼▼▼ 追加 ▼▼▼
     const loadingMessage = document.getElementById('loading-message');
     const mainContent = document.getElementById('main-content');
     const disclaimerButton = document.getElementById('disclaimer-button');
     const disclaimerModal = document.getElementById('disclaimer-modal');
     const closeModalButton = document.getElementById('close-modal-button');
     
-    // ▼▼▼ 列番号（0から始まるインデックス）をここで定義 ▼▼▼
     const complainColIndex = {
         FACILITY: 1,
         TIMESTAMP: 2,
@@ -263,6 +268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         FACILITY_REASON: 27,
         INCONVENIENCE: 28,
         INCONVENIENCE_REASON: 29,
+        NPS_SCORE: 30, // ▼▼▼ NPSスコアの列番号を追加 ▼▼▼
         REQUEST: 31,
         NPS_REASON: 42,
         BIRTH_YEAR: 35,
@@ -387,6 +393,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     analyzeButton.addEventListener('click', () => { location.hash = encodeURIComponent(facilitySelect.value); });
     backButton.addEventListener('click', () => { location.hash = ''; });
+    backButtonBottom.addEventListener('click', () => { location.hash = ''; }); // ▼▼▼ 追加 ▼▼▼
     window.addEventListener('hashchange', handleRouteChange);
     disclaimerButton.addEventListener('click', async () => {
         try {
@@ -560,7 +567,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (requestText) feedback.request.push({ ...commonData, text: requestText });
 
             const npsReason = row[complainColIndex.NPS_REASON];
-            if (npsReason) feedback.nps.push({ ...commonData, text: npsReason });
+            if (npsReason) {
+                feedback.nps.push({ ...commonData, text: npsReason, score: row[complainColIndex.NPS_SCORE] }); // ▼▼▼ スコアを追加 ▼▼▼
+            }
         });
 
         const createCommentCard = (comment, type) => {
@@ -569,6 +578,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!info || !comment.text) return '';
             
             const colors = colorClasses[info.color];
+            
+            // ▼▼▼ NPSスコア表示用のHTMLを生成 ▼▼▼
+            const isNps = type === 'nps';
+            const npsScoreBadge = isNps && comment.score !== undefined
+                ? `<span class="ml-auto text-xs font-bold px-2 py-1 rounded-full bg-purple-200 text-purple-800">評価: ${comment.score}点</span>`
+                : '';
+
             return `
                 <div class="bg-white p-4 rounded-lg border border-gray-200">
                     <div class="flex items-start space-x-4">
@@ -576,7 +592,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <svg class="w-6 h-6 ${colors.icon}" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${info.icon}"></path></svg>
                         </div>
                         <div class="flex-1">
-                            <p class="px-2 py-0.5 text-xs font-semibold rounded-full ${colors.bg} ${colors.label} inline-block">${info.label}</p>
+                            <div class="flex items-center">
+                                <p class="px-2 py-0.5 text-xs font-semibold rounded-full ${colors.bg} ${colors.label} inline-block">${info.label}</p>
+                                ${npsScoreBadge}
+                            </div>
                             <p class="mt-2 text-gray-700 text-sm leading-relaxed">${comment.text}</p>
                             <p class="mt-3 text-xs text-gray-500">${comment.year}年生まれ・${comment.prefecture}在住・${comment.gender}</p>
                         </div>
@@ -627,13 +646,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('facility-title').textContent = `${facilityName} の分析結果`;
         
         document.getElementById('total-answers').textContent = data['全回答数'] ?? 'N/A';
-        const trendEl = document.getElementById('answer-trend');
-        const trend = data['伸び率（対前月）'];
-        if (trend === null || trend === undefined) trendEl.innerHTML = `▶️ <span class="text-gray-600 font-bold ml-1">前月比 N/A</span>`;
-        else if (Number(trend) > 0) trendEl.innerHTML = `🔼 <span class="text-green-600 font-bold ml-1">前月比 +${(Number(trend) * 100).toFixed(1)}%</span>`;
-        else if (Number(trend) < 0) trendEl.innerHTML = `🔽 <span class="text-red-600 font-bold ml-1">前月比 ${(Number(trend) * 100).toFixed(1)}%</span>`;
-        else trendEl.innerHTML = `▶️ <span class="text-gray-600 font-bold ml-1">前月比 ±0%</span>`;
-        const answersRank = getRank(data['全回答数'], '全回答数');
+        const answersRank = getRank(data['全回答数'], '全回答数'); // ▼▼▼ 前月比の代わりに順位を表示 ▼▼▼
         document.getElementById('total-answers-rank').textContent = `(全${answersRank.total}施設中 ${answersRank.rank}位)`;
         
         const nps = data.NPS;
