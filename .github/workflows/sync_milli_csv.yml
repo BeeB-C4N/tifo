@@ -1,4 +1,4 @@
-name: Sync milli CSV (public Sheets)
+name: Sync milli CSV/TSV (public Sheets)
 
 on:
   schedule:
@@ -12,12 +12,19 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     env:
+      # === Google Sheets IDs ===
       SCORE_ID: 1Dmv06IhjwIR8nhoKPF158GsyGAF39CQIijIi0k134oA
       PERSONA_ID: 1z-vz7o91NNwZcz_lCy0WoN2vKoX87wKiT25GPNe6Hh4
+      COMPLAIN_ID: 1EXOUNdG-koe12QM-zuE3UYGE4bVpQD1hRROUJwMn3JU
+
       SCORE_GID: "0"
       PERSONA_GID: "0"
+      COMPLAIN_GID: "0"
+
+      # === 保存先 ===
       OUT_SCORE: ishikawa/milli_score.csv
       OUT_PERSONA: ishikawa/milli_persona.csv
+      OUT_COMPLAIN: ishikawa/milli_complain.tsv
 
     steps:
       - name: Checkout
@@ -29,22 +36,23 @@ jobs:
             rm -rf tifo/ishikawa
           fi
 
-      - name: Fetch CSVs
+      - name: Fetch CSV/TSV files
         run: |
           set -euo pipefail
           mkdir -p "$(dirname "$OUT_SCORE")"
 
           fetch () {
-            id="$1"; gid="$2"; out="$3"; tmp="$(mktemp)"
-            url="https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}&_ts=$(date +%s)"
+            id="$1"; gid="$2"; fmt="$3"; out="$4"; tmp="$(mktemp)"
+            url="https://docs.google.com/spreadsheets/d/${id}/export?format=${fmt}&gid=${gid}&_ts=$(date +%s)"
             curl -fsSL --retry 5 --retry-delay 3 -H 'Cache-Control: no-cache' "$url" -o "$tmp"
-            head -c 512 "$tmp" | grep -qi "<html" && { echo "ERROR: got HTML (not public?)"; exit 1; }
+            head -c 512 "$tmp" | grep -qi "<html" && { echo "ERROR: got HTML instead of ${fmt}"; exit 1; }
             mv "$tmp" "$out"
             echo "Saved $out"
           }
 
-          fetch "$SCORE_ID"   "$SCORE_GID"   "$OUT_SCORE"
-          fetch "$PERSONA_ID" "$PERSONA_GID" "$OUT_PERSONA"
+          fetch "$SCORE_ID"   "$SCORE_GID"   "csv" "$OUT_SCORE"
+          fetch "$PERSONA_ID" "$PERSONA_GID" "csv" "$OUT_PERSONA"
+          fetch "$COMPLAIN_ID" "$COMPLAIN_GID" "tsv" "$OUT_COMPLAIN"
 
       - name: Commit & push if changed
         run: |
@@ -55,6 +63,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "chore: daily sync CSV ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))"
+            git commit -m "chore: daily sync CSV/TSV ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))"
             git push
           fi
