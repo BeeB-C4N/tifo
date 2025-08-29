@@ -314,10 +314,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderSimpleRanking = (type) => {
         const rankingContainer = document.getElementById('ranking-container');
         const sortKey = type === 'nps' ? 'NPS' : '施設全体満足度';
-        const sortedData = [...surveyData].sort((a, b) => (b[sortKey] || 0) - (a[sortKey] || 0));
+
+        const sortedData = [...surveyData].sort((a, b) => {
+            // NPSの場合は値を100倍して比較
+            const valA = type === 'nps' ? (a[sortKey] || 0) * 100 : (a[sortKey] || 0);
+            const valB = type === 'nps' ? (b[sortKey] || 0) * 100 : (b[sortKey] || 0);
+            return valB - valA;
+        });
         
         rankingContainer.innerHTML = sortedData
-            .map((item, index) => createRankingCard(index + 1, item['施設'], item[sortKey], item['県'], type === 'satisfaction' ? '点' : ''))
+            .map((item, index) => {
+                // NPSの場合はスコアを100倍して表示
+                const score = type === 'nps' ? (item[sortKey] || 0) * 100 : item[sortKey];
+                return createRankingCard(index + 1, item['施設'], score, item['県'], type === 'satisfaction' ? '点' : '');
+            })
             .join('');
     };
 
