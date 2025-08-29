@@ -56,6 +56,21 @@
             transform: translateY(2px);
             border-bottom-width: 2px;
         }
+        /* つぶやきボタンのスタイル */
+        .tifo-button-secondary {
+            background-color: #fff;
+            color: var(--tifo-primary);
+            border: 2px solid var(--tifo-primary);
+            font-weight: bold;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            transition: all 0.2s ease;
+        }
+        .tifo-button-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px -3px rgba(79, 209, 197, 0.2);
+        }
+
         .prefecture-btn {
             background-color: var(--tifo-card-bg);
             color: var(--tifo-primary-dark);
@@ -112,8 +127,18 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; }
-        .modal-content { background-color: white; padding: 2rem; border-radius: 1rem; max-width: 90%; width: 600px; max-height: 80vh; overflow-y: auto; }
+        .modal-content { background-color: white; padding: 2rem; border-radius: 1rem; max-width: 90%; width: 700px; max-height: 80vh; overflow-y: auto; }
 
+        /* Markdown表示用スタイル */
+        .markdown-body h1 { font-size: 1.75rem; font-weight: bold; color: var(--tifo-primary); border-bottom: 2px solid var(--tifo-card-border); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+        .markdown-body h2 { font-size: 1.5rem; font-weight: bold; margin-top: 2rem; margin-bottom: 1rem; padding-left: 0.75rem; border-left: 4px solid var(--tifo-primary); color: var(--tifo-text); }
+        .markdown-body h3 { font-size: 1.25rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #4A5568; }
+        .markdown-body hr { border-top: 1px solid var(--tifo-card-border); margin: 2rem 0; }
+        .markdown-body ul { list-style: none; padding-left: 0; }
+        .markdown-body li { background-color: #F7FAFC; border-radius: 0.5rem; padding: 0.75rem 1rem; margin-bottom: 0.5rem; position: relative; padding-left: 2rem; }
+        .markdown-body li::before { content: '🐾'; position: absolute; left: 0.75rem; top: 0.75rem; color: var(--tifo-primary); }
+        .markdown-body strong { color: var(--tifo-primary-dark); font-weight: bold; }
+        .markdown-body p { margin-bottom: 1rem; line-height: 1.7; }
     </style>
 </head>
 <body class="text-gray-800">
@@ -145,10 +170,14 @@
             </div>
         </section>
 
-        <!-- Analysis Button -->
-        <section class="text-center mb-8">
+        <!-- Action Buttons -->
+        <section class="text-center mb-8 space-y-4">
             <button id="analysis-btn" class="tifo-button text-lg px-8">
                 ３県連携データ分析
+            </button>
+            <br>
+            <button id="insights-btn" class="tifo-button-secondary text-md px-6">
+                Tifoちゃんのつぶやき
             </button>
         </section>
 
@@ -199,6 +228,17 @@
             <button id="close-about-modal-button" class="tifo-button mt-6 w-full">閉じる</button>
         </div>
     </div>
+    
+    <!-- Insights Modal -->
+    <div id="insights-modal" class="modal-overlay hidden">
+        <div class="modal-content custom-scrollbar">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Tifoちゃんのつぶやき</h2>
+                <button id="close-insights-modal-button" class="text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div id="insights-text" class="markdown-body"></div>
+        </div>
+    </div>
 
 
 <script>
@@ -226,7 +266,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const lines = csvText.trim().replace(/\r/g, '').split('\n');
         if (lines.length < 2) return [];
 
-        // Regex to handle comma-separated values, including those enclosed in double quotes
         const csvRegex = /(?:^|,)(?:"([^"]*(?:""[^"]*)*)"|([^,]*))/g;
         
         const parseLine = (line) => {
@@ -257,13 +296,34 @@ document.addEventListener('DOMContentLoaded', () => {
                     entry[key] = !isNaN(numValue) ? numValue : rawValue;
                 }
             });
-            // Rename 'TIF' column to '県'
             if (entry['TIF']) {
                 entry['県'] = entry['TIF'];
                 delete entry['TIF'];
             }
             return entry;
         }).filter(Boolean); // Filter out nulls from empty lines
+    };
+
+    // --- Function to parse Markdown to HTML ---
+    const parseMarkdown = (mdText) => {
+        let html = mdText
+            .replace(/^#\s+(.+)/gm, '<h1>$1</h1>')
+            .replace(/^##\s+(.+)/gm, '<h2>$1</h2>')
+            .replace(/^###\s+(.+)/gm, '<h3>$1</h3>')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/^---\s*$/gm, '<hr>')
+            .replace(/^- (.+)/gm, '<li>$1</li>')
+            .replace(/<\/li>(\s*)<li>/g, '</li><li>'); // Join adjacent list items
+        
+        // Wrap <li> elements in <ul>
+        html = html.replace(/<li>(.+?)<\/li>/gs, (match) => {
+            if (!match.includes('<ul>')) {
+                return '<ul>' + match + '</ul>';
+            }
+            return match;
+        }).replace(/<\/ul>\s*<ul>/g, ''); // Merge adjacent <ul> tags
+
+        return html;
     };
 
 
@@ -277,7 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const csvText = await response.text();
             const allData = parseCSV(csvText);
             
-            // Filter facilities with 30 or more responses
             surveyData = allData.filter(item => item['全回答数'] >= 30);
 
             if (surveyData.length === 0) {
@@ -304,6 +363,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const aboutButton = document.getElementById('about-button');
         const aboutModal = document.getElementById('about-modal');
         const closeAboutModalButton = document.getElementById('close-about-modal-button');
+        const insightsBtn = document.getElementById('insights-btn');
+        const insightsModal = document.getElementById('insights-modal');
+        const closeInsightsModalButton = document.getElementById('close-insights-modal-button');
         let currentTab = 'nps';
 
         analysisBtn.addEventListener('click', () => {
@@ -352,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         detailFilter.addEventListener('change', renderSegmentRanking);
         
-        // --- About Modal Listeners ---
+        // --- Modal Listeners ---
         aboutButton.addEventListener('click', async () => {
             try {
                 const response = await fetch('./aboutus.txt');
@@ -367,6 +429,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         closeAboutModalButton.addEventListener('click', () => aboutModal.classList.add('hidden'));
         aboutModal.addEventListener('click', (e) => { if(e.target === aboutModal) aboutModal.classList.add('hidden'); });
+
+        insightsBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch('./tifo_insights.md');
+                if (!response.ok) throw new Error('File not found');
+                const mdText = await response.text();
+                document.getElementById('insights-text').innerHTML = parseMarkdown(mdText);
+                insightsModal.classList.remove('hidden');
+            } catch(e) {
+                document.getElementById('insights-text').textContent = 'ファイルが読み込めませんでした。';
+                insightsModal.classList.remove('hidden');
+            }
+        });
+        closeInsightsModalButton.addEventListener('click', () => insightsModal.classList.add('hidden'));
+        insightsModal.addEventListener('click', (e) => { if(e.target === insightsModal) insightsModal.classList.add('hidden'); });
     };
 
     // --- Ranking Card Drawing Function ---
@@ -439,14 +516,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const calculatedData = surveyData.map(item => {
             const segmentCount = item[filterValue];
             const totalCount = item['全回答数'];
-            // Calculate percentage, treat missing data as -1 for sorting to the bottom
             const percentage = (typeof segmentCount === 'number' && totalCount > 0) ? (segmentCount / totalCount) * 100 : -1;
             return { ...item, percentage: percentage };
         }).sort((a, b) => b.percentage - a.percentage);
 
         segmentRankingContainer.innerHTML = calculatedData
             .map((item, index) => {
-                const score = item.percentage === -1 ? 'N/A' : item.percentage;
+                const score = item.percentage < 0 ? 'N/A' : item.percentage;
                 return createRankingCard(index + 1, item['施設'], score, item['県'], '%');
             })
             .join('');
