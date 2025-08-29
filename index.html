@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>観光猫型AIアドバイザリー</title>
+    <title>TIFO - 観光猫型AIアドバイザリー</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -107,7 +107,7 @@
                     <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-size="50" font-weight="bold" fill="white" letter-spacing="2">TIFO</text>
                 </svg>
             </div>
-            <img src="https://placehold.co/80x80/FFFFFF/000000?text=TIFOちゃん" alt="TIFOちゃん" class="h-20 w-20 object-contain">
+            <img src="tifo.png" alt="TIFOちゃん" class="h-20 w-20 object-contain">
         </header>
         <p class="text-lg text-gray-600 mb-8 text-center">観光猫型AIアドバイザリー</p>
 
@@ -115,7 +115,7 @@
         <section class="mb-8">
             <div class="flex items-center justify-center gap-4">
                 <button class="prefecture-btn">富山</button>
-                <a href="https://beeb-c4n.github.io/tifo/ishikawa/#" class="prefecture-btn">石川</a>
+                <a href="https://beeb-c4n.github.io/tifo/ishikawa/#" class="prefecture-btn" target="_blank" rel="noopener noreferrer">石川</a>
                 <button class="prefecture-btn">福井</button>
             </div>
         </section>
@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
         stay: ['1泊', '2泊', '3泊', '4泊以上', '日帰り'],
         companion: ['自分ひとり','恋人','友人','夫婦2人','団体旅行','親戚','親','職場の同僚','小学生以下連れの家族','中学生以下連れの家族','高校生連れの家族','災害支援'],
         purpose: ['宿でのんびり過ごす','温泉や露天風呂','地元の美味しいものを食べる','花見や紅葉などの自然鑑賞','名所、旧跡の観光','テーマパーク（遊園地、動物園、博物館など）','買い物、アウトレット','お祭りやイベントへの参加・見物','スポーツ観戦や芸能鑑賞（コンサート等）','アウトドア（海水浴、釣り、登山など）','まちあるき、都市散策','各種体験（手作り、果物狩りなど）','スキー・スノボ、マリンスポーツ','その他スポーツ（ゴルフ、テニスなど）','ドライブ・ツーリング','友人・親戚を尋ねる','出張など仕事関係'],
-        prefecture: ['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県','茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県','新潟県','富山県','石川県','福井県','山梨県','長ノ県','岐阜県','静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県','徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県']
+        prefecture: ['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県','茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県','新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県','徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県']
     };
     
     // --- CSVをパースしてオブジェクトの配列に変換する関数 ---
@@ -188,6 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const key = header.trim();
                 const rawValue = values[index] ? values[index].trim() : '';
                 const numValue = parseFloat(rawValue);
+                // 数値に変換できるものは数値として、それ以外は文字列として格納
                 entry[key] = !isNaN(numValue) && rawValue !== '' ? numValue : rawValue;
             });
             // TIFカラムを「県」にリネーム
@@ -207,10 +208,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(`CSVファイルの読み込みに失敗しました: ${response.statusText}`);
             }
             const csvText = await response.text();
-            surveyData = parseCSV(csvText);
+            const allData = parseCSV(csvText);
+            
+            // 回答数が30以上の施設のみをフィルタリング
+            surveyData = allData.filter(item => item['全回答数'] >= 30);
 
             if (surveyData.length === 0) {
-                throw new Error('CSVデータが空か、形式が正しくありません。');
+                 throw new Error('表示対象となるデータ（回答数30件以上）がありません。');
             }
             
             loadingIndicator.classList.add('hidden');
@@ -335,7 +339,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }).sort((a, b) => b.percentage - a.percentage);
 
         segmentRankingContainer.innerHTML = calculatedData
-            .slice(0, 30)
             .map((item, index) => createRankingCard(index + 1, item['施設'], item.percentage, item['県'], '%'))
             .join('');
     };
@@ -347,5 +350,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
-
 
