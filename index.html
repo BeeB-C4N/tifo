@@ -16,6 +16,11 @@
             --tifo-primary-dark: #38B2AC;
             --tifo-card-border: #E2E8F0;
             --tifo-card-bg: #FFFFFF;
+            /* 県のカラーコード */
+            --color-toyama-bg: #4db56a;
+            --color-ishikawa-bg: #008cbe;
+            --color-fukui-bg: #00006b;
+            --color-pref-text: #ffffff;
         }
         body {
             font-family: 'Noto Sans JP', sans-serif;
@@ -85,6 +90,17 @@
         .rank-2 { background-color: #C0C0C0; }
         .rank-3 { background-color: #CD7F32; }
         .rank-default { background-color: #A9A9A9; }
+        
+        .pref-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 9999px;
+        }
+        .pref-toyama { background-color: var(--color-toyama-bg); color: var(--color-pref-text); }
+        .pref-ishikawa { background-color: var(--color-ishikawa-bg); color: var(--color-pref-text); }
+        .pref-fukui { background-color: var(--color-fukui-bg); color: var(--color-pref-text); }
+        
         .custom-scrollbar::-webkit-scrollbar { width: 8px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
@@ -207,8 +223,13 @@ document.addEventListener('DOMContentLoaded', () => {
             headers.forEach((header, index) => {
                 const key = header.trim();
                 const rawValue = (values[index] || '').trim();
-                const numValue = parseFloat(rawValue);
-                entry[key] = !isNaN(numValue) && rawValue !== '' ? numValue : rawValue;
+                
+                if (rawValue === '') {
+                    entry[key] = null; // 空欄は null とする
+                } else {
+                    const numValue = parseFloat(rawValue);
+                    entry[key] = !isNaN(numValue) ? numValue : rawValue;
+                }
             });
             // TIFカラムを「県」にリネーム
             if (entry['TIF']) {
@@ -310,12 +331,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rank === 2) rankClass = 'rank-2';
         if (rank === 3) rankClass = 'rank-3';
 
-        const prefectureColors = {
-            "富山": "bg-blue-100 text-blue-800",
-            "石川": "bg-yellow-100 text-yellow-800",
-            "福井": "bg-green-100 text-green-800",
+        const prefectureClasses = {
+            "富山": "pref-toyama",
+            "石川": "pref-ishikawa",
+            "福井": "pref-fukui",
         };
-        const prefBadge = `<span class="text-xs font-semibold px-2 py-0.5 rounded-full ${prefectureColors[prefecture] || 'bg-gray-100 text-gray-800'}">${prefecture}</span>`;
+        const prefClass = prefectureClasses[prefecture] || 'bg-gray-200 text-gray-800';
+        const prefBadge = `<span class="pref-badge ${prefClass}">${prefecture}</span>`;
         
         const scoreDisplay = (typeof score === 'number') ? score.toFixed(1) : 'N/A';
 
@@ -338,16 +360,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const sortKey = type === 'nps' ? 'NPS' : '施設全体満足度';
 
         const sortedData = [...surveyData].sort((a, b) => {
-            // NPSの場合は値を100倍して比較
-            const valA = type === 'nps' ? (a[sortKey] || 0) * 100 : (a[sortKey] || 0);
-            const valB = type === 'nps' ? (b[sortKey] || 0) * 100 : (b[sortKey] || 0);
+            const valA = (typeof a[sortKey] === 'number') ? a[sortKey] : -Infinity;
+            const valB = (typeof b[sortKey] === 'number') ? b[sortKey] : -Infinity;
             return valB - valA;
         });
         
         rankingContainer.innerHTML = sortedData
             .map((item, index) => {
-                // NPSの場合はスコアを100倍して表示
-                const score = type === 'nps' ? (item[sortKey] || 0) * 100 : item[sortKey];
+                const scoreValue = item[sortKey];
+                let score;
+                if (typeof scoreValue !== 'number') {
+                    score = 'N/A'; // データがない場合は'N/A'
+                } else {
+                    score = type === 'nps' ? scoreValue * 100 : scoreValue;
+                }
+                
                 return createRankingCard(index + 1, item['施設'], score, item['県'], type === 'satisfaction' ? '点' : '');
             })
             .join('');
@@ -363,10 +390,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const calculatedData = surveyData.map(item => {
-            const segmentCount = item[filterValue] || 0;
+            const segmentCount = item[filterValue];
             const totalCount = item['全回答数'];
-            // 全回答数で割り、割合を計算。全回答数が0の場合は0とする。
-            const percentage = totalCount > 0 ? (segmentCount / totalCount) * 100 : 0;
+            // 割合を計算。データがない場合は-1としてソートで最後尾に
+            const percentage = (typeof segmentCount === 'number' && totalCount > 0) ? (segmentCount / totalCount) * 100 : -1;
             return { ...item, percentage: percentage };
         }).sort((a, b) => b.percentage - a.percentage);
 
