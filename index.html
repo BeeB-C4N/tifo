@@ -312,26 +312,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Function to parse Markdown to HTML (Improved Version) ---
     const parseMarkdown = (mdText) => {
         const blocks = mdText.trim().split(/\n\s*\n/);
-        const htmlBlocks = blocks.map(block => {
-            // Headers
-            if (block.startsWith('# ')) return `<h1>${block.substring(2)}</h1>`;
-            if (block.startsWith('## ')) return `<h2>${block.substring(3)}</h2>`;
-            if (block.startsWith('### ')) return `<h3>${block.substring(4)}</h3>`;
-            
-            // HR
-            if (block.match(/^---\s*$/)) return '<hr>';
+        return blocks.map(block => {
+            const formatInline = (text) => text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
-            // Lists
+            if (block.startsWith('# ')) return `<h1>${formatInline(block.substring(2))}</h1>`;
+            if (block.startsWith('## ')) return `<h2>${formatInline(block.substring(3))}</h2>`;
+            if (block.startsWith('### ')) return `<h3>${formatInline(block.substring(4))}</h3>`;
+            if (block.match(/^---\s*$/)) return '<hr>';
             if (block.startsWith('- ')) {
-                const items = block.split('\n').map(item => `<li>${item.substring(2).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</li>`).join('');
+                const items = block.split('\n').map(item => `<li>${formatInline(item.substring(2).trim())}</li>`).join('');
                 return `<ul>${items}</ul>`;
             }
-
-            // Paragraphs - process strong tags and line breaks here
-            return `<p>${block.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/  \n/g, '<br>').replace(/\n/g, ' ')}</p>`;
-        });
-
-        return htmlBlocks.join('');
+            return `<p>${formatInline(block.replace(/\n/g, '<br>'))}</p>`;
+        }).join('');
     };
 
 
@@ -355,8 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.classList.remove('overflow-hidden');
             appContainer.classList.remove('hidden');
             setupEventListeners();
-        } catch (error)
- {
+        } catch (error) {
             loadingIndicator.innerHTML = `<p class="text-red-500 font-bold">エラーが発生しました。</p><p class="text-sm mt-2">${error.message}</p>`;
             console.error(error);
         }
