@@ -22,15 +22,19 @@
             --color-fukui-bg: #00006b;
             --color-pref-text: #ffffff;
         }
-        html {
-            position: relative;
-            min-height: 100%;
-        }
         body {
             font-family: 'Noto Sans JP', sans-serif;
             background-color: var(--tifo-bg);
             color: var(--tifo-text);
-            margin-bottom: 60px; /* フッターの高さ分 */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        main#app-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         .tifo-card {
             background-color: var(--tifo-card-bg);
@@ -147,42 +151,44 @@
         <p class="text-gray-600">データを読み込んでいます...</p>
     </div>
 
-    <div id="app-container" class="container mx-auto p-4 md:p-8 max-w-4xl hidden">
+    <main id="app-container" class="container mx-auto p-4 md:p-8 max-w-4xl hidden">
+        <div id="intro-section">
+            <!-- Header: Logo and Character -->
+            <header class="flex items-center justify-center gap-4 mb-4 text-center">
+                <a href="https://codefornoto.github.io/tifo/" target="_blank" rel="noopener noreferrer">
+                    <div class="w-24 h-24">
+                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="var(--tifo-primary)" d="M47.9,-51.9C62.4,-41.2,74.7,-25.9,78.2,-8.1C81.7,9.7,76.4,30.1,64.8,44.2C53.2,58.3,35.3,66.1,17.7,70.8C0.1,75.5,-17.2,77.1,-33.1,70.2C-49,63.3,-63.5,47.9,-71.4,30.1C-79.3,12.3,-80.6,-7.8,-74.3,-24.1C-68,-40.4,-54.1,-52.9,-38.8,-60.1C-23.5,-67.3,-6.8,-69.2,8.9,-66.1C24.6,-63,47.9,-51.9,47.9,-51.9Z" transform="translate(100 100)"></path>
+                            <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-size="50" font-weight="bold" fill="white" letter-spacing="2">TIFO</text>
+                        </svg>
+                    </div>
+                </a>
+                <img src="tifo.png" alt="TIFOちゃん" class="h-20 w-20 object-contain">
+            </header>
+            <p class="text-lg text-gray-600 mb-8 text-center">観光猫型AIアドバイザリー</p>
 
-        <!-- Header: Logo and Character -->
-        <header class="flex items-center justify-center gap-4 mb-4 text-center">
-            <div class="w-24 h-24">
-                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                    <path fill="var(--tifo-primary)" d="M47.9,-51.9C62.4,-41.2,74.7,-25.9,78.2,-8.1C81.7,9.7,76.4,30.1,64.8,44.2C53.2,58.3,35.3,66.1,17.7,70.8C0.1,75.5,-17.2,77.1,-33.1,70.2C-49,63.3,-63.5,47.9,-71.4,30.1C-79.3,12.3,-80.6,-7.8,-74.3,-24.1C-68,-40.4,-54.1,-52.9,-38.8,-60.1C-23.5,-67.3,-6.8,-69.2,8.9,-66.1C24.6,-63,47.9,-51.9,47.9,-51.9Z" transform="translate(100 100)"></path>
-                    <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-size="50" font-weight="bold" fill="white" letter-spacing="2">TIFO</text>
-                </svg>
-            </div>
-            <img src="tifo.png" alt="TIFOちゃん" class="h-20 w-20 object-contain">
-        </header>
-        <p class="text-lg text-gray-600 mb-8 text-center">観光猫型AIアドバイザリー</p>
+            <!-- Prefecture Selection Buttons -->
+            <section class="mb-8">
+                <div class="flex items-center justify-center gap-4">
+                    <button class="prefecture-btn">富山</button>
+                    <a href="https://beeb-c4n.github.io/tifo/ishikawa/#" class="prefecture-btn" target="_blank" rel="noopener noreferrer">石川</a>
+                    <button class="prefecture-btn">福井</button>
+                </div>
+            </section>
 
-        <!-- Prefecture Selection Buttons -->
-        <section class="mb-8">
-            <div class="flex items-center justify-center gap-4">
-                <button class="prefecture-btn">富山</button>
-                <a href="https://beeb-c4n.github.io/tifo/ishikawa/#" class="prefecture-btn" target="_blank" rel="noopener noreferrer">石川</a>
-                <button class="prefecture-btn">福井</button>
-            </div>
-        </section>
-
-        <!-- Action Buttons -->
-        <section class="text-center mb-8 space-y-4">
-            <button id="analysis-btn" class="tifo-button text-lg px-8">
-                ３県連携データ分析
-            </button>
-            <br>
-            <button id="insights-btn" class="tifo-button-secondary text-md px-6">
-                Tifoちゃんのつぶやき
-            </button>
-        </section>
-
+            <!-- Action Buttons -->
+            <section class="text-center mb-8 space-y-4">
+                <button id="analysis-btn" class="tifo-button text-lg px-8">
+                    ３県連携データ分析
+                </button>
+                <br>
+                <button id="insights-btn" class="tifo-button-secondary text-md px-6">
+                    Tifoちゃんのつぶやき
+                </button>
+            </section>
+        </div>
         <!-- Analysis Results Area -->
-        <main id="analysis-results" class="hidden space-y-8">
+        <div id="analysis-results" class="hidden space-y-8">
             <section class="tifo-card">
                 <div class="flex border-b border-gray-200 mb-4">
                     <button id="nps-tab" class="tab-button active">NPS</button>
@@ -210,11 +216,11 @@
                      <p class="text-gray-500 text-center pt-10">はじめに分析軸を選択してください。</p>
                 </div>
             </section>
-        </main>
-    </div>
+        </div>
+    </main>
 
     <!-- Footer -->
-    <footer class="absolute bottom-0 left-0 right-0 w-full p-4">
+    <footer class="w-full p-4">
          <div class="text-center">
             <button id="about-button" class="text-sm text-gray-500 hover:underline">TIFOとは</button>
         </div>
@@ -310,16 +316,24 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/^##\s+(.+)/gm, '<h2>$1</h2>')
             .replace(/^###\s+(.+)/gm, '<h3>$1</h3>')
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-            .replace(/^---\s*$/gm, '<hr>')
             .replace(/^- (.+)/gm, '<li>$1</li>')
-            .replace(/<\/li>(\s*)<li>/g, '</li><li>');
+            .replace(/<\/li>\s*<li>/g, '</li><li>');
         
         html = html.replace(/(<li>(.+?)<\/li>)/gs, (match, p1) => {
             if (match.startsWith('<ul>')) return match;
             return '<ul>' + p1 + '</ul>';
         }).replace(/<\/ul>\s*<ul>/g, '');
+        
+        html = html.replace(/^---\s*$/gm, '<hr>');
 
-        html = html.replace(/\n/g, '<br>').replace(/<br>\s*<br>/g, '<p></p>');
+        html = html.split('\n').map(line => line.trim() === '' ? '' : `<p>${line}</p>`)
+                   .join('')
+                   .replace(/<p><h1>(.*?)<\/h1><\/p>/g, '<h1>$1</h1>')
+                   .replace(/<p><h2>(.*?)<\/h2><\/p>/g, '<h2>$2</h2>')
+                   .replace(/<p><h3>(.*?)<\/h3><\/p>/g, '<h3>$1</h3>')
+                   .replace(/<p><hr><\/p>/g, '<hr>')
+                   .replace(/<p><ul>(.*?)<\/ul><\/p>/g, '<ul>$1</ul>')
+                   .replace(/<p><\/p>/g, '');
 
         return html;
     };
@@ -342,9 +356,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             loadingIndicator.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
             appContainer.classList.remove('hidden');
             setupEventListeners();
-        } catch (error) {
+        } catch (error)
+ {
             loadingIndicator.innerHTML = `<p class="text-red-500 font-bold">エラーが発生しました。</p><p class="text-sm mt-2">${error.message}</p>`;
             console.error(error);
         }
@@ -354,6 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const setupEventListeners = () => {
         const analysisBtn = document.getElementById('analysis-btn');
         const analysisResults = document.getElementById('analysis-results');
+        const introSection = document.getElementById('intro-section');
         const npsTab = document.getElementById('nps-tab');
         const satisfactionTab = document.getElementById('satisfaction-tab');
         const categoryFilter = document.getElementById('category-filter');
@@ -368,7 +385,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         analysisBtn.addEventListener('click', () => {
             analysisResults.classList.toggle('hidden');
-            if (!analysisResults.classList.contains('hidden')) {
+            if (analysisResults.classList.contains('hidden')) {
+                introSection.classList.remove('mb-8');
+            } else {
+                introSection.classList.add('mb-8');
                 renderSimpleRanking(currentTab);
             }
         });
@@ -480,7 +500,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Data processing and rendering functions ---
     const getSortableNPS = (value) => {
         if (typeof value !== 'number') return -Infinity;
-        // If value is between -1 and 1, multiply by 100. Otherwise, use as is.
         return Math.abs(value) <= 1 ? value * 100 : value;
     };
 
@@ -514,7 +533,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const calculatedData = surveyData.map(item => {
             const segmentValue = item[filterValue];
-            // The CSV value is a ratio, so multiply by 100 to get percentage.
             const percentage = (typeof segmentValue === 'number') ? segmentValue * 100 : -1;
             return { ...item, percentage: percentage };
         }).sort((a, b) => b.percentage - a.percentage);
