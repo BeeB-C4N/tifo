@@ -234,7 +234,7 @@
         <div class="modal-content custom-scrollbar">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold">Tifoちゃんのつぶやき</h2>
-                <button id="close-insights-modal-button" class="text-gray-400 hover:text-gray-600">&times;</button>
+                <button id="close-insights-modal-button" class="text-gray-400 hover:text-gray-600 text-3xl leading-none">&times;</button>
             </div>
             <div id="insights-text" class="markdown-body"></div>
         </div>
@@ -259,7 +259,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- Function to parse CSV into an array of objects (Robust version) ---
     const parseCSV = (csvText) => {
-        // Remove BOM (Byte Order Mark) which might be added by Excel
         if (csvText.charCodeAt(0) === 0xFEFF) {
             csvText = csvText.slice(1);
         }
@@ -282,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const headers = parseLine(lines[0]);
         
         return lines.slice(1).map(line => {
-            if (!line.trim()) return null; // Skip empty lines
+            if (!line.trim()) return null;
             const values = parseLine(line);
             const entry = {};
             headers.forEach((header, index) => {
@@ -290,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const rawValue = (values[index] || '').trim();
                 
                 if (rawValue === '') {
-                    entry[key] = null; // Treat empty fields as null
+                    entry[key] = null;
                 } else {
                     const numValue = parseFloat(rawValue);
                     entry[key] = !isNaN(numValue) ? numValue : rawValue;
@@ -301,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 delete entry['TIF'];
             }
             return entry;
-        }).filter(Boolean); // Filter out nulls from empty lines
+        }).filter(Boolean);
     };
 
     // --- Function to parse Markdown to HTML ---
@@ -313,15 +312,14 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
             .replace(/^---\s*$/gm, '<hr>')
             .replace(/^- (.+)/gm, '<li>$1</li>')
-            .replace(/<\/li>(\s*)<li>/g, '</li><li>'); // Join adjacent list items
+            .replace(/<\/li>(\s*)<li>/g, '</li><li>');
         
-        // Wrap <li> elements in <ul>
-        html = html.replace(/<li>(.+?)<\/li>/gs, (match) => {
-            if (!match.includes('<ul>')) {
-                return '<ul>' + match + '</ul>';
-            }
-            return match;
-        }).replace(/<\/ul>\s*<ul>/g, ''); // Merge adjacent <ul> tags
+        html = html.replace(/(<li>(.+?)<\/li>)/gs, (match, p1) => {
+            if (match.startsWith('<ul>')) return match;
+            return '<ul>' + p1 + '</ul>';
+        }).replace(/<\/ul>\s*<ul>/g, '');
+
+        html = html.replace(/\n/g, '<br>').replace(/<br>\s*<br>/g, '<p></p>');
 
         return html;
     };
@@ -478,27 +476,28 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
     };
+    
+    // --- Data processing and rendering functions ---
+    const getSortableNPS = (value) => {
+        if (typeof value !== 'number') return -Infinity;
+        // If value is between -1 and 1, multiply by 100. Otherwise, use as is.
+        return Math.abs(value) <= 1 ? value * 100 : value;
+    };
 
     const renderSimpleRanking = (type) => {
         const rankingContainer = document.getElementById('ranking-container');
         const sortKey = type === 'nps' ? 'NPS' : '施設全体満足度';
 
         const sortedData = [...surveyData].sort((a, b) => {
-            const valA = (typeof a[sortKey] === 'number') ? a[sortKey] : -Infinity;
-            const valB = (typeof b[sortKey] === 'number') ? b[sortKey] : -Infinity;
+            const valA = type === 'nps' ? getSortableNPS(a[sortKey]) : (a[sortKey] || -Infinity);
+            const valB = type === 'nps' ? getSortableNPS(b[sortKey]) : (b[sortKey] || -Infinity);
             return valB - valA;
         });
         
         rankingContainer.innerHTML = sortedData
             .map((item, index) => {
                 const scoreValue = item[sortKey];
-                let score;
-                if (typeof scoreValue !== 'number') {
-                    score = 'N/A'; // Use 'N/A' for missing data
-                } else {
-                    score = type === 'nps' ? scoreValue * 100 : scoreValue;
-                }
-                
+                const score = type === 'nps' ? getSortableNPS(scoreValue) : scoreValue;
                 return createRankingCard(index + 1, item['施設'], score, item['県'], type === 'satisfaction' ? '点' : '');
             })
             .join('');
@@ -514,9 +513,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const calculatedData = surveyData.map(item => {
-            const segmentCount = item[filterValue];
-            const totalCount = item['全回答数'];
-            const percentage = (typeof segmentCount === 'number' && totalCount > 0) ? (segmentCount / totalCount) * 100 : -1;
+            const segmentValue = item[filterValue];
+            // The CSV value is a ratio, so multiply by 100 to get percentage.
+            const percentage = (typeof segmentValue === 'number') ? segmentValue * 100 : -1;
             return { ...item, percentage: percentage };
         }).sort((a, b) => b.percentage - a.percentage);
 
