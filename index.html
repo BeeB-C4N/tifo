@@ -138,7 +138,7 @@
         .markdown-body h2 { font-size: 1.5rem; font-weight: bold; margin-top: 2rem; margin-bottom: 1rem; padding-left: 0.75rem; border-left: 4px solid var(--tifo-primary); color: var(--tifo-text); }
         .markdown-body h3 { font-size: 1.25rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #4A5568; }
         .markdown-body hr { border-top: 1px solid var(--tifo-card-border); margin: 2rem 0; }
-        .markdown-body ul { list-style: none; padding-left: 0; }
+        .markdown-body ul { list-style: none; padding-left: 0; margin: 1rem 0; }
         .markdown-body li { background-color: #F7FAFC; border-radius: 0.5rem; padding: 0.75rem 1rem; margin-bottom: 0.5rem; position: relative; padding-left: 2rem; }
         .markdown-body li::before { content: '🐾'; position: absolute; left: 0.75rem; top: 0.75rem; color: var(--tifo-primary); }
         .markdown-body strong { color: var(--tifo-primary-dark); font-weight: bold; }
@@ -309,33 +309,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }).filter(Boolean);
     };
 
-    // --- Function to parse Markdown to HTML ---
+    // --- Function to parse Markdown to HTML (Improved Version) ---
     const parseMarkdown = (mdText) => {
-        let html = mdText
-            .replace(/^#\s+(.+)/gm, '<h1>$1</h1>')
-            .replace(/^##\s+(.+)/gm, '<h2>$1</h2>')
-            .replace(/^###\s+(.+)/gm, '<h3>$1</h3>')
-            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-            .replace(/^- (.+)/gm, '<li>$1</li>')
-            .replace(/<\/li>\s*<li>/g, '</li><li>');
-        
-        html = html.replace(/(<li>(.+?)<\/li>)/gs, (match, p1) => {
-            if (match.startsWith('<ul>')) return match;
-            return '<ul>' + p1 + '</ul>';
-        }).replace(/<\/ul>\s*<ul>/g, '');
-        
-        html = html.replace(/^---\s*$/gm, '<hr>');
+        const blocks = mdText.trim().split(/\n\s*\n/);
+        const htmlBlocks = blocks.map(block => {
+            // Headers
+            if (block.startsWith('# ')) return `<h1>${block.substring(2)}</h1>`;
+            if (block.startsWith('## ')) return `<h2>${block.substring(3)}</h2>`;
+            if (block.startsWith('### ')) return `<h3>${block.substring(4)}</h3>`;
+            
+            // HR
+            if (block.match(/^---\s*$/)) return '<hr>';
 
-        html = html.split('\n').map(line => line.trim() === '' ? '' : `<p>${line}</p>`)
-                   .join('')
-                   .replace(/<p><h1>(.*?)<\/h1><\/p>/g, '<h1>$1</h1>')
-                   .replace(/<p><h2>(.*?)<\/h2><\/p>/g, '<h2>$2</h2>')
-                   .replace(/<p><h3>(.*?)<\/h3><\/p>/g, '<h3>$1</h3>')
-                   .replace(/<p><hr><\/p>/g, '<hr>')
-                   .replace(/<p><ul>(.*?)<\/ul><\/p>/g, '<ul>$1</ul>')
-                   .replace(/<p><\/p>/g, '');
+            // Lists
+            if (block.startsWith('- ')) {
+                const items = block.split('\n').map(item => `<li>${item.substring(2).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</li>`).join('');
+                return `<ul>${items}</ul>`;
+            }
 
-        return html;
+            // Paragraphs - process strong tags and line breaks here
+            return `<p>${block.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/  \n/g, '<br>').replace(/\n/g, ' ')}</p>`;
+        });
+
+        return htmlBlocks.join('');
     };
 
 
@@ -387,8 +383,10 @@ document.addEventListener('DOMContentLoaded', () => {
             analysisResults.classList.toggle('hidden');
             if (analysisResults.classList.contains('hidden')) {
                 introSection.classList.remove('mb-8');
+                 appContainer.style.justifyContent = 'center';
             } else {
                 introSection.classList.add('mb-8');
+                 appContainer.style.justifyContent = 'flex-start';
                 renderSimpleRanking(currentTab);
             }
         });
