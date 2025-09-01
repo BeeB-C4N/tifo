@@ -323,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const items = block.split('\n').map(item => `<li>${formatInline(item.substring(2).trim())}</li>`).join('');
                 return `<ul>${items}</ul>`;
             }
-            return `<p>${formatInline(block.replace(/\n/g, '<br>'))}</p>`;
+            return `<p>${formatInline(block.replace(/  \n/g, '<br>'))}</p>`;
         }).join('');
     };
 
