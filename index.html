@@ -155,7 +155,7 @@
         <div id="intro-section">
             <!-- Header: Logo and Character -->
             <header class="flex items-center justify-center gap-4 mb-4 text-center">
-                <a href="https://codefornoto.github.io/TIFO/" target="_blank" rel="noopener noreferrer">
+                <a href="https://codefornoto.github.io/tifo/" target="_blank" rel="noopener noreferrer">
                     <div class="w-24 h-24">
                         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
                             <path fill="var(--tifo-primary)" d="M47.9,-51.9C62.4,-41.2,74.7,-25.9,78.2,-8.1C81.7,9.7,76.4,30.1,64.8,44.2C53.2,58.3,35.3,66.1,17.7,70.8C0.1,75.5,-17.2,77.1,-33.1,70.2C-49,63.3,-63.5,47.9,-71.4,30.1C-79.3,12.3,-80.6,-7.8,-74.3,-24.1C-68,-40.4,-54.1,-52.9,-38.8,-60.1C-23.5,-67.3,-6.8,-69.2,8.9,-66.1C24.6,-63,47.9,-51.9,47.9,-51.9Z" transform="translate(100 100)"></path>
@@ -309,22 +309,53 @@ document.addEventListener('DOMContentLoaded', () => {
         }).filter(Boolean);
     };
 
-    // --- Function to parse Markdown to HTML (Improved Version) ---
+    // --- Function to parse Markdown to HTML (Corrected Version) ---
     const parseMarkdown = (mdText) => {
-        const blocks = mdText.trim().split(/\n\s*\n/);
-        return blocks.map(block => {
-            const formatInline = (text) => text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        const lines = mdText.trim().replace(/\r/g, '').split('\n');
+        let html = '';
+        let inList = false;
 
-            if (block.startsWith('# ')) return `<h1>${formatInline(block.substring(2))}</h1>`;
-            if (block.startsWith('## ')) return `<h2>${formatInline(block.substring(3))}</h2>`;
-            if (block.startsWith('### ')) return `<h3>${formatInline(block.substring(4))}</h3>`;
-            if (block.match(/^---\s*$/)) return '<hr>';
-            if (block.startsWith('- ')) {
-                const items = block.split('\n').map(item => `<li>${formatInline(item.substring(2).trim())}</li>`).join('');
-                return `<ul>${items}</ul>`;
+        const formatInline = (text) => text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        lines.forEach(line => {
+            const trimmedLine = line.trim();
+
+            // Handle lists
+            if (trimmedLine.startsWith('- ')) {
+                if (!inList) {
+                    html += '<ul>';
+                    inList = true;
+                }
+                html += `<li>${formatInline(trimmedLine.substring(2))}</li>`;
+            } else {
+                // If a non-list line is encountered, close the list
+                if (inList) {
+                    html += '</ul>';
+                    inList = false;
+                }
+
+                // Handle other block elements
+                if (trimmedLine.startsWith('# ')) {
+                    html += `<h1>${formatInline(trimmedLine.substring(2))}</h1>`;
+                } else if (trimmedLine.startsWith('## ')) {
+                    html += `<h2>${formatInline(trimmedLine.substring(3))}</h2>`;
+                } else if (trimmedLine.startsWith('### ')) {
+                    html += `<h3>${formatInline(trimmedLine.substring(4))}</h3>`;
+                } else if (trimmedLine.match(/^---\s*$/)) {
+                    html += '<hr>';
+                } else if (trimmedLine.length > 0) {
+                    // This is a paragraph
+                    html += `<p>${formatInline(trimmedLine.replace(/  $/, '<br>'))}</p>`;
+                }
             }
-            return `<p>${formatInline(block.replace(/  \n/g, '<br>'))}</p>`;
-        }).join('');
+        });
+
+        // Close any list that might be open at the end of the file
+        if (inList) {
+            html += '</ul>';
+        }
+
+        return html;
     };
 
 
