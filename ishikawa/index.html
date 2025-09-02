@@ -323,7 +323,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const closeAiAdviceModalBtn = document.getElementById('close-ai-advice-modal-btn');
     const aiAdviceModalBody = document.getElementById('ai-advice-modal-body');
 
-    // ▼▼▼ 以前の正常動作していた際の列インデックス定義を復活 ▼▼▼
     const complainColIndex = {
         FACILITY: 1, TIMESTAMP: 2, SERVICE_SATISFACTION: 24, SERVICE_REASON: 25,
         FACILITY_SATISFACTION: 26, FACILITY_REASON: 27, INCONVENIENCE: 28, INCONVENIENCE_REASON: 29,
@@ -392,7 +391,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return { data, key: facilityKey };
     }
 
-    // ▼▼▼ 自由記述用のパーサーを以前の正常なものに戻す ▼▼▼
     function parseTSVAsArrays(text) {
         const lines = text.trim().replace(/\r/g, '').split('\n');
         if (lines.length < 2) return [];
@@ -408,7 +406,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (format === 'ai-advice-tsv') {
             return parseAIAdviceTSV(cleanText);
         }
-        if (format === 'complain-tsv-array') {
+        // ▼▼▼ 正しいパーサーを呼び出すように修正 ▼▼▼
+        if (format === 'tsv-array') { 
             return parseTSVAsArrays(cleanText);
         }
         return parseCSVWithHeaders(cleanText);
@@ -446,8 +445,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             personaFacilityKey = personaResult.key;
 
             loadingStatus.textContent = '口コミデータを読み込み中...';
-            // ▼▼▼ 自由記述の読み込み形式を元に戻す ▼▼▼
-            complainData = await fetchAndParse('./milli_complain.tsv', 'complain-tsv-array');
+            // ▼▼▼ 自由記述の読み込み形式を以前の正常なものに戻す ▼▼▼
+            complainData = await fetchAndParse('./milli_complain.tsv', 'tsv-array');
             
             loadingStatus.textContent = 'AIアドバイスを準備中...';
             const aiAdviceResult = await fetchAndParse('./milli_ai_advice.tsv', 'ai-advice-tsv');
@@ -618,7 +617,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         personaSection.classList.remove('hidden');
     }
 
-    // ▼▼▼ 自由記述表示のロジックを以前の正常なものに戻す ▼▼▼
     function displayCustomerFeedback(facilityName) {
         const satisfactionInfo = {
             'とても満足': { icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'green', label: 'とても満足' },
@@ -738,7 +736,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
         
-        // アクティブなタブがない場合、最初のタブをアクティブにする
         if (tabs.length > 0 && !document.querySelector('.feedback-tab-button.active')) {
             tabs[0].classList.add('active');
             contents.forEach(c => c.classList.add('hidden'));
