@@ -76,7 +76,7 @@
         .nps-bar-value { position: absolute; top: 50%; transform: translateY(-50%); width: 0.75rem; height: 0.75rem; background-color: var(--tifo-text); border-radius: 50%; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.3); transition: left 0.5s ease-in-out; }
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(45, 55, 72, 0.75); /* --tifo-text with opacity */
+            background-color: rgba(45, 55, 72, 0.75);
             display: flex; align-items: center; justify-content: center;
             z-index: 50;
             transition: opacity 0.3s ease;
@@ -88,11 +88,11 @@
         .modal-content {
             background-color: white;
             padding: 2rem;
-            border-radius: 1.5rem; /* tifo-cardに合わせる */
+            border-radius: 1.5rem;
             max-width: 90%;
             width: 650px;
             max-height: 85vh;
-            display: flex; /* Flexboxでレイアウト */
+            display: flex;
             flex-direction: column;
             box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
             transition: transform 0.3s ease, opacity 0.3s ease;
@@ -224,16 +224,26 @@
                  </div>
             </section>
 
+            <!-- ▼▼▼ ここからAIアドバイス機能（レイアウト変更） ▼▼▼ -->
             <section id="ai-advice-section">
-                <div class="tifo-card text-center items-center">
-                    <img src="../tifo.png" alt="TIFOちゃん" class="h-16 w-16 object-contain mb-3">
-                    <p class="text-gray-700 mb-1 leading-relaxed">
-                        <strong id="ai-advice-facility-name" class="font-bold"></strong>さんへ
-                    </p>
-                    <p class="text-gray-600 mb-5 text-sm">ペルソナと自由記述の意見を元にアドバイスを考えたにゃ</p>
-                    <button id="open-ai-advice-btn" class="tifo-button">AIからのアドバイスを見る</button>
+                <h2 class="text-2xl font-bold mb-4 flex items-center">TifoちゃんからのAIアドバイス</h2>
+                <div class="flex items-stretch md:items-start gap-4">
+                    <img src="../tifo.png" alt="TIFOちゃん" class="h-32 w-32 object-contain flex-shrink-0 hidden md:block">
+                    <div class="bg-white p-6 rounded-xl md:rounded-r-xl md:rounded-bl-xl relative w-full flex-1 border border-gray-200">
+                        <div class="absolute left-[-10px] top-[15px] w-0 h-0 border-t-[10px] border-t-transparent border-r-[10px] border-r-white border-b-[10px] border-b-transparent hidden md:block"></div>
+                        <div class="flex flex-col h-full">
+                            <div>
+                                <p class="text-gray-800 font-bold text-lg"><strong id="ai-advice-facility-name"></strong>さんへ</p>
+                                <p class="text-gray-600 mt-2">ペルソナと自由記述の意見を元にアドバイスを考えたにゃ。<br>ボタンを押して、これからのヒントを確認してにゃん🐾</p>
+                            </div>
+                            <div class="mt-auto pt-4 text-center md:text-right">
+                                <button id="open-ai-advice-btn" class="tifo-button">AIからのアドバイスを見る</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
+            <!-- ▲▲▲ ここまでAIアドバイス機能 ▲▲▲ -->
             
             <section>
                 <h2 class="text-2xl font-bold mb-4 flex items-center">グループ別 来訪者TOP5</h2>
@@ -265,7 +275,7 @@
         </main>
     </div>
 
-    <!-- 免責事項モーダル (既存) -->
+    <!-- 免責事項モーダル -->
     <div id="disclaimer-modal" class="modal-overlay hidden">
         <div class="modal-content !w-[600px] !p-8">
             <h2 class="text-2xl font-bold mb-4">免責事項</h2>
@@ -284,7 +294,6 @@
                 </button>
             </div>
             <div id="ai-advice-modal-body" class="flex-grow overflow-y-auto custom-scrollbar pr-2 whitespace-pre-wrap text-gray-700 leading-relaxed">
-                <!-- アドバイスがここに挿入されます -->
             </div>
         </div>
     </div>
@@ -362,22 +371,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         return lines.slice(1).map(line => line.split('\t').map(val => val.trim()));
     }
 
+    // ▼▼▼ TSVパーサーを改行に対応するように修正 ▼▼▼
     function parseTSVWithHeaders(text) {
-        const lines = text.trim().replace(/\r/g, '').split('\n');
-        if (lines.length < 2) return { data: [], key: '' };
-        const headers = lines[0].split('\t').map(h => h.trim());
+        const allLines = text.trim().replace(/\r/g, '').split('\n');
+        if (allLines.length < 2) return { data: [], key: '' };
+
+        const headers = allLines.shift().split('\t').map(h => h.trim());
         const facilityKey = headers.includes('施設名') ? '施設名' : headers[0];
-        
-        const data = lines.slice(1).map(line => {
-            const values = line.split('\t');
-            const obj = {};
-            headers.forEach((header, i) => {
-                obj[header] = values[i] ? values[i].trim().replace(/^"|"$/g, '') : '';
-            });
-            return obj;
-        });
+        const data = [];
+        let currentObject = null;
+
+        for (const line of allLines) {
+            const parts = line.split('\t');
+            // ヒューリスティック: 行がタブを複数含んでいる場合、新しいレコードの開始と見なす
+            // (アドバイスの途中行はタブを含まないという想定)
+            if (parts.length > 2) { 
+                if (currentObject) {
+                    data.push(currentObject); // 前のオブジェクトを確定
+                }
+                currentObject = {};
+                headers.forEach((header, i) => {
+                    // クォーテーションを削除して格納
+                    currentObject[header] = (parts[i] || '').trim().replace(/^"|"$/g, '');
+                });
+            } else {
+                // 新しいレコードでなければ、直前のオブジェクトの最終フィールドに改行を追加して結合
+                if (currentObject) {
+                    const lastHeader = headers[headers.length - 1];
+                    // 結合する行からもクォーテーションを削除
+                    currentObject[lastHeader] += '\n' + line.trim().replace(/^"|"$/g, '');
+                }
+            }
+        }
+        if (currentObject) {
+            data.push(currentObject); // 最後のオブジェクトを忘れずに追加
+        }
         return { data, key: facilityKey };
     }
+
 
     async function fetchAndParse(url, format = 'csv') {
         const response = await fetch(url);
@@ -429,12 +460,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             complainData = await fetchAndParse('./milli_complain.tsv', 'tsv-array');
             
             loadingStatus.textContent = 'AIアドバイスを準備中...';
-            // ▼▼▼ パス修正 ▼▼▼
             const aiAdviceResult = await fetchAndParse('./milli_ai_advice.tsv', 'tsv-header');
             aiAdviceData = aiAdviceResult.data;
 
             loadingStatus.textContent = '追加データを読み込み中...';
-            // ▼▼▼ パス修正 ▼▼▼
             const adviceResponse = await fetch('../tifo_advice.txt').catch(e => null);
             
             if (surveyData.length === 0) throw new Error("No valid data rows found in milli_score.csv.");
@@ -469,7 +498,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.addEventListener('hashchange', handleRouteChange);
     disclaimerButton.addEventListener('click', async () => {
         try {
-            // ▼▼▼ パス修正 ▼▼▼
             const response = await fetch('../credit.txt');
             if (!response.ok) throw new Error('File not found');
             const text = await response.text();
