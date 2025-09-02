@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TIFO - 観光猫型アドバイザリー</title>
+    <title>TIFO - 観光猫型AIアドバイザリー</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -203,7 +203,7 @@
             </section>
             
             <section id="customer-voice-section">
-                 <h2 class="text-2xl font-bold mb-4 flex items-center">過去１か月の観光客の声</h2>
+                 <h2 class="text-2xl font-bold mb-4 flex items-center">お客様の声</h2>
                  <div class="tifo-card !p-0 overflow-hidden">
                      <div class="px-6 border-b border-gray-200">
                          <nav class="-mb-px flex space-x-2 overflow-x-auto" aria-label="Tabs">
@@ -233,7 +233,7 @@
                         <div class="flex flex-col h-full">
                             <div>
                                 <p class="text-gray-800 font-bold text-lg"><strong id="ai-advice-facility-name"></strong>さんへ</p>
-                                <p class="text-gray-600 mt-2">ペルソナと自由記述の意見を元にアドバイスを考えたにゃ。<br>ボタンを押して、これからのヒントを確認してにゃん🐾</p>
+                                <p class="text-gray-600 mt-2">ペルソナと自由記述の意見を元にアドバイスを考えたにゃ🐾</p>
                             </div>
                             <div class="mt-auto pt-4 text-center md:text-right">
                                 <button id="open-ai-advice-btn" class="tifo-button">AIからのアドバイスを見る</button>
@@ -366,12 +366,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     function parseAIAdviceTSV(text) {
         const allLines = text.trim().replace(/\r/g, '').split('\n');
         if (allLines.length < 2) return { data: [], key: '' };
-
         const headers = allLines.shift().split('\t').map(h => h.trim());
         const facilityKey = headers.includes('施設名') ? '施設名' : headers[0];
         const data = [];
         let currentObject = null;
-
         for (const line of allLines) {
             const parts = line.split('\t');
             if (parts.length > 2) { 
@@ -406,7 +404,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (format === 'ai-advice-tsv') {
             return parseAIAdviceTSV(cleanText);
         }
-        // ▼▼▼ 正しいパーサーを呼び出すように修正 ▼▼▼
         if (format === 'tsv-array') { 
             return parseTSVAsArrays(cleanText);
         }
@@ -445,7 +442,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             personaFacilityKey = personaResult.key;
 
             loadingStatus.textContent = '口コミデータを読み込み中...';
-            // ▼▼▼ 自由記述の読み込み形式を以前の正常なものに戻す ▼▼▼
             complainData = await fetchAndParse('./milli_complain.tsv', 'tsv-array');
             
             loadingStatus.textContent = 'AIアドバイスを準備中...';
@@ -638,15 +634,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             cyan: { icon: 'text-cyan-500', label: 'text-cyan-800', bg: 'bg-cyan-100' },
             purple: { icon: 'text-purple-500', label: 'text-purple-800', bg: 'bg-purple-100' },
         };
-        const oneMonthAgo = new Date();
-        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
         
+        // ▼▼▼ 日付フィルターを削除し、施設名での絞り込みのみ実行 ▼▼▼
         const filteredData = complainData
-            .filter(row => {
-                if (row[complainColIndex.FACILITY] !== facilityName) return false;
-                const timestamp = new Date(row[complainColIndex.TIMESTAMP]);
-                return !isNaN(timestamp) && timestamp >= oneMonthAgo;
-            })
+            .filter(row => row && row[complainColIndex.FACILITY] === facilityName)
             .sort((a, b) => new Date(b[complainColIndex.TIMESTAMP]) - new Date(a[complainColIndex.TIMESTAMP]));
 
         const feedback = { service: [], facility: [], inconvenience: [], request: [], nps: [] };
