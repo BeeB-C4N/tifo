@@ -224,7 +224,6 @@
                  </div>
             </section>
 
-            <!-- ▼▼▼ ここからAIアドバイス機能（レイアウト変更） ▼▼▼ -->
             <section id="ai-advice-section">
                 <h2 class="text-2xl font-bold mb-4 flex items-center">TifoちゃんからのAIアドバイス</h2>
                 <div class="flex items-stretch md:items-start gap-4">
@@ -234,7 +233,7 @@
                         <div class="flex flex-col h-full">
                             <div>
                                 <p class="text-gray-800 font-bold text-lg"><strong id="ai-advice-facility-name"></strong>さんへ</p>
-                                <p class="text-gray-600 mt-2">ペルソナと自由記述の意見を元にアドバイスを考えたにゃ。<br>ボタンを押して、これからのヒントを確認してにゃん🐾</p>
+                                <p class="text-gray-600 mt-2">ペルソナと自由記述の意見を元にアドバイスを考えたにゃ。</p>
                             </div>
                             <div class="mt-auto pt-4 text-center md:text-right">
                                 <button id="open-ai-advice-btn" class="tifo-button">AIからのアドバイスを見る</button>
@@ -243,7 +242,6 @@
                     </div>
                 </div>
             </section>
-            <!-- ▲▲▲ ここまでAIアドバイス機能 ▲▲▲ -->
             
             <section>
                 <h2 class="text-2xl font-bold mb-4 flex items-center">グループ別 来訪者TOP5</h2>
@@ -325,12 +323,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const closeAiAdviceModalBtn = document.getElementById('close-ai-advice-modal-btn');
     const aiAdviceModalBody = document.getElementById('ai-advice-modal-body');
 
-    const complainColIndex = {
-        FACILITY: 1, TIMESTAMP: 2, SERVICE_SATISFACTION: 24, SERVICE_REASON: 25,
-        FACILITY_SATISFACTION: 26, FACILITY_REASON: 27, INCONVENIENCE: 28, INCONVENIENCE_REASON: 29,
-        NPS_SCORE: 30, REQUEST: 31, NPS_REASON: 42, BIRTH_YEAR: 35, PREFECTURE: 36, GENDER: 34,
-    };
-
     function parseCSVWithHeaders(text) {
         const lines = text.trim().replace(/\r/g, '').split('\n');
         if (lines.length < 2) return { data: [], key: '' };
@@ -365,50 +357,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         return { data, key: facilityKey };
     }
 
-    function parseTSVAsArrays(text) {
-        const lines = text.trim().replace(/\r/g, '').split('\n');
-        if (lines.length < 2) return [];
-        return lines.slice(1).map(line => line.split('\t').map(val => val.trim()));
-    }
-
     // ▼▼▼ TSVパーサーを改行に対応するように修正 ▼▼▼
     function parseTSVWithHeaders(text) {
         const allLines = text.trim().replace(/\r/g, '').split('\n');
         if (allLines.length < 2) return { data: [], key: '' };
 
         const headers = allLines.shift().split('\t').map(h => h.trim());
-        const facilityKey = headers.includes('施設名') ? '施設名' : headers[0];
+        const facilityKey = headers.includes('施設名') ? '施設名' : (headers.includes('施設') ? '施設' : headers[0]);
         const data = [];
         let currentObject = null;
 
         for (const line of allLines) {
             const parts = line.split('\t');
-            // ヒューリスティック: 行がタブを複数含んでいる場合、新しいレコードの開始と見なす
-            // (アドバイスの途中行はタブを含まないという想定)
-            if (parts.length > 2) { 
+            // ヒューリスティック: 行がタブを複数(4以上)含んでいる or タイムスタンプらしきものがある場合、新しいレコードの開始と見なす
+            const isNewRecord = parts.length > 4 || (parts[2] && parts[2].includes('/'));
+            
+            if (isNewRecord) { 
                 if (currentObject) {
-                    data.push(currentObject); // 前のオブジェクトを確定
+                    data.push(currentObject);
                 }
                 currentObject = {};
                 headers.forEach((header, i) => {
-                    // クォーテーションを削除して格納
                     currentObject[header] = (parts[i] || '').trim().replace(/^"|"$/g, '');
                 });
             } else {
-                // 新しいレコードでなければ、直前のオブジェクトの最終フィールドに改行を追加して結合
                 if (currentObject) {
                     const lastHeader = headers[headers.length - 1];
-                    // 結合する行からもクォーテーションを削除
                     currentObject[lastHeader] += '\n' + line.trim().replace(/^"|"$/g, '');
                 }
             }
         }
         if (currentObject) {
-            data.push(currentObject); // 最後のオブジェクトを忘れずに追加
+            data.push(currentObject);
         }
         return { data, key: facilityKey };
     }
-
 
     async function fetchAndParse(url, format = 'csv') {
         const response = await fetch(url);
@@ -416,9 +399,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const text = await response.text();
         const cleanText = text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
         
-        if (format === 'tsv-array') {
-            return parseTSVAsArrays(cleanText);
-        }
         if (format === 'tsv-header') {
             return parseTSVWithHeaders(cleanText);
         }
@@ -456,8 +436,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             personaData = personaResult.data;
             personaFacilityKey = personaResult.key;
 
+            // ▼▼▼ 口コミデータも改行対応パーサーで読み込む ▼▼▼
             loadingStatus.textContent = '口コミデータを読み込み中...';
-            complainData = await fetchAndParse('./milli_complain.tsv', 'tsv-array');
+            const complainResult = await fetchAndParse('./milli_complain.tsv', 'tsv-header');
+            complainData = complainResult.data;
             
             loadingStatus.textContent = 'AIアドバイスを準備中...';
             const aiAdviceResult = await fetchAndParse('./milli_ai_advice.tsv', 'tsv-header');
@@ -628,7 +610,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         personaSection.classList.remove('hidden');
     }
 
+    // ▼▼▼ 口コミ表示をオブジェクト配列対応に修正 ▼▼▼
     function displayCustomerFeedback(facilityName) {
+        // ヘッダー名をマッピング
+        const headerMap = {
+            FACILITY: '施設',
+            TIMESTAMP: 'タイムスタンプ',
+            SERVICE_SATISFACTION: '当施設の商品・サービスについて、総合的な満足度をお聞かせください。',
+            SERVICE_REASON: '当施設の商品・サービスで最も満足した点について、具体的に教えてください。',
+            FACILITY_SATISFACTION: '当施設の施設全体（清潔さ・雰囲気・設備など）について、総合的な満足度をお聞かせください。',
+            FACILITY_REASON: '当施設の施設全体で最も満足した点について、具体的に教えてください。',
+            INCONVENIENCE: '今回の旅行またはお出かけで、不便を感じたことはありましたか。',
+            INCONVENIENCE_REASON: '前の設問で「感じた」とお答えになった方にお聞きします。不便を感じたのはどのようなことですか。具体的に教えてください。',
+            NPS_SCORE: '今回訪れた 当施設 を友人や同僚におすすめしたい度合いを、0～10点で評価するとしたら、どのくらいですか。',
+            REQUEST: '当施設へのご意見・ご要望があればお聞かせください。',
+            NPS_REASON: '前の設問の評価の理由を教えてください。',
+            BIRTH_YEAR: 'あなたの生まれた年（西暦）を教えてください。',
+            PREFECTURE: 'お住まいの都道府県を教えてください。',
+            GENDER: 'あなたの性別を教えてください。'
+        };
+
         const satisfactionInfo = {
             'とても満足': { icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'green', label: 'とても満足' },
             '満足': { icon: 'M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'blue', label: '満足' },
@@ -651,33 +652,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
         const oneMonthAgo = new Date();
         oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        
         const filteredData = complainData
             .filter(row => {
-                if (row[complainColIndex.FACILITY] !== facilityName) return false;
-                const timestamp = new Date(row[complainColIndex.TIMESTAMP]);
+                if (!row || row[headerMap.FACILITY] !== facilityName) return false;
+                const timestamp = new Date(row[headerMap.TIMESTAMP]);
                 return !isNaN(timestamp) && timestamp >= oneMonthAgo;
             })
-            .sort((a, b) => new Date(b[complainColIndex.TIMESTAMP]) - new Date(a[complainColIndex.TIMESTAMP]));
+            .sort((a, b) => new Date(b[headerMap.TIMESTAMP]) - new Date(a[headerMap.TIMESTAMP]));
+
         const feedback = { service: [], facility: [], inconvenience: [], request: [], nps: [] };
+        
         filteredData.forEach(row => {
             const commonData = {
-                year: row[complainColIndex.BIRTH_YEAR] || '不明',
-                prefecture: row[complainColIndex.PREFECTURE] || '不明',
-                gender: row[complainColIndex.GENDER] || '不明'
+                year: row[headerMap.BIRTH_YEAR] || '不明',
+                prefecture: row[headerMap.PREFECTURE] || '不明',
+                gender: row[headerMap.GENDER] || '不明'
             };
-            const serviceReason = row[complainColIndex.SERVICE_REASON];
-            if (serviceReason) feedback.service.push({ ...commonData, text: serviceReason, satisfaction: row[complainColIndex.SERVICE_SATISFACTION] });
-            const facilityReason = row[complainColIndex.FACILITY_REASON];
-            if (facilityReason) feedback.facility.push({ ...commonData, text: facilityReason, satisfaction: row[complainColIndex.FACILITY_SATISFACTION] });
-            const inconvenienceReason = row[complainColIndex.INCONVENIENCE_REASON];
-            if (row[complainColIndex.INCONVENIENCE] === '感じた' && inconvenienceReason) feedback.inconvenience.push({ ...commonData, text: inconvenienceReason, satisfaction: '感じた' });
-            const requestText = row[complainColIndex.REQUEST];
+
+            const serviceReason = row[headerMap.SERVICE_REASON];
+            if (serviceReason) feedback.service.push({ ...commonData, text: serviceReason, satisfaction: row[headerMap.SERVICE_SATISFACTION] });
+
+            const facilityReason = row[headerMap.FACILITY_REASON];
+            if (facilityReason) feedback.facility.push({ ...commonData, text: facilityReason, satisfaction: row[headerMap.FACILITY_SATISFACTION] });
+
+            const inconvenienceReason = row[headerMap.INCONVENIENCE_REASON];
+            if (row[headerMap.INCONVENIENCE] === '感じた' && inconvenienceReason) feedback.inconvenience.push({ ...commonData, text: inconvenienceReason, satisfaction: '感じた' });
+            
+            const requestText = row[headerMap.REQUEST];
             if (requestText) feedback.request.push({ ...commonData, text: requestText });
-            const npsReason = row[complainColIndex.NPS_REASON];
+
+            const npsReason = row[headerMap.NPS_REASON];
             if (npsReason) {
-                feedback.nps.push({ ...commonData, text: npsReason, score: row[complainColIndex.NPS_SCORE] });
+                feedback.nps.push({ ...commonData, text: npsReason, score: row[headerMap.NPS_SCORE] });
             }
         });
+
         const createCommentCard = (comment, type) => {
             let infoKey = type === 'request' || type === 'nps' ? type : comment.satisfaction;
             const info = satisfactionInfo[infoKey];
@@ -707,6 +717,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             `;
         };
+
         const renderComments = (containerId, comments, type) => {
             const container = document.getElementById(containerId);
             if (comments.length > 0) {
@@ -715,11 +726,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 container.innerHTML = `<div class="text-center text-gray-500 py-16">該当するコメントはありません。</div>`;
             }
         };
+
         renderComments('feedback-content-service', feedback.service, 'service');
         renderComments('feedback-content-facility', feedback.facility, 'facility');
         renderComments('feedback-content-inconvenience', feedback.inconvenience, 'inconvenience');
         renderComments('feedback-content-request', feedback.request, 'request');
         renderComments('feedback-content-nps', feedback.nps, 'nps');
+        
         const tabs = document.querySelectorAll('.feedback-tab-button');
         const contents = document.querySelectorAll('.feedback-content');
         
@@ -735,12 +748,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
         
-        if (tabs.length > 0) {
+        if (tabs.length > 0 && !document.querySelector('.feedback-tab-button.active')) {
             tabs[0].classList.add('active');
             contents.forEach(c => c.classList.add('hidden'));
             document.getElementById(`feedback-content-${tabs[0].dataset.tab}`).classList.remove('hidden');
         }
     }
+
 
     function displayAnalysis(data) {
         const facilityName = data[scoreFacilityKey];
