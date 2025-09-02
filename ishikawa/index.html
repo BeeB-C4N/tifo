@@ -233,7 +233,7 @@
                         <div class="flex flex-col h-full">
                             <div>
                                 <p class="text-gray-800 font-bold text-lg"><strong id="ai-advice-facility-name"></strong>さんへ</p>
-                                <p class="text-gray-600 mt-2">ペルソナと自由記述の意見を元にアドバイスを考えたにゃ。</p>
+                                <p class="text-gray-600 mt-2">ペルソナと自由記述の意見を元にアドバイスを考えたにゃ。<br>ボタンを押して、これからのヒントを確認してにゃん🐾</p>
                             </div>
                             <div class="mt-auto pt-4 text-center md:text-right">
                                 <button id="open-ai-advice-btn" class="tifo-button">AIからのアドバイスを見る</button>
@@ -356,26 +356,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         return { data, key: facilityKey };
     }
-
-    // ▼▼▼ TSVパーサーを改行に対応するように修正 ▼▼▼
-    function parseTSVWithHeaders(text) {
+    
+    // ▼▼▼ AIアドバイス用のTSVパーサー（改行対応） ▼▼▼
+    function parseAIAdviceTSV(text) {
         const allLines = text.trim().replace(/\r/g, '').split('\n');
         if (allLines.length < 2) return { data: [], key: '' };
 
         const headers = allLines.shift().split('\t').map(h => h.trim());
-        const facilityKey = headers.includes('施設名') ? '施設名' : (headers.includes('施設') ? '施設' : headers[0]);
+        const facilityKey = headers.includes('施設名') ? '施設名' : headers[0];
         const data = [];
         let currentObject = null;
 
         for (const line of allLines) {
             const parts = line.split('\t');
-            // ヒューリスティック: 行がタブを複数(4以上)含んでいる or タイムスタンプらしきものがある場合、新しいレコードの開始と見なす
-            const isNewRecord = parts.length > 4 || (parts[2] && parts[2].includes('/'));
-            
-            if (isNewRecord) { 
-                if (currentObject) {
-                    data.push(currentObject);
-                }
+            if (parts.length > 2) { 
+                if (currentObject) data.push(currentObject);
                 currentObject = {};
                 headers.forEach((header, i) => {
                     currentObject[header] = (parts[i] || '').trim().replace(/^"|"$/g, '');
@@ -387,11 +382,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         }
-        if (currentObject) {
-            data.push(currentObject);
-        }
+        if (currentObject) data.push(currentObject);
         return { data, key: facilityKey };
     }
+
+    // ▼▼▼ 自由記述用のTSVパーサー（従来の配列形式）▼▼▼
+    function parseComplainTSV(text) {
+        const lines = text.trim().replace(/\r/g, '').split('\n');
+        if (lines.length < 2) return { data: [], headers: [] };
+        const headers = lines.shift().split('\t').map(h => h.trim());
+        const data = lines.map(line => line.split('\t').map(val => val.trim().replace(/^"|"$/g, '')));
+        return { data, headers };
+    }
+
 
     async function fetchAndParse(url, format = 'csv') {
         const response = await fetch(url);
@@ -399,8 +402,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const text = await response.text();
         const cleanText = text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
         
-        if (format === 'tsv-header') {
-            return parseTSVWithHeaders(cleanText);
+        if (format === 'ai-advice-tsv') {
+            return parseAIAdviceTSV(cleanText);
+        }
+        if (format === 'complain-tsv') {
+            return parseComplainTSV(cleanText);
         }
         return parseCSVWithHeaders(cleanText);
     }
@@ -422,6 +428,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         analysisScreen.classList.add('hidden');
     };
 
+    let complainHeaders = [];
     async function loadData() {
         try {
             const loadingStatus = loadingMessage.querySelector('p');
@@ -436,13 +443,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             personaData = personaResult.data;
             personaFacilityKey = personaResult.key;
 
-            // ▼▼▼ 口コミデータも改行対応パーサーで読み込む ▼▼▼
             loadingStatus.textContent = '口コミデータを読み込み中...';
-            const complainResult = await fetchAndParse('./milli_complain.tsv', 'tsv-header');
+            const complainResult = await fetchAndParse('./milli_complain.tsv', 'complain-tsv');
             complainData = complainResult.data;
+            complainHeaders = complainResult.headers; // ヘッダーを保存
             
             loadingStatus.textContent = 'AIアドバイスを準備中...';
-            const aiAdviceResult = await fetchAndParse('./milli_ai_advice.tsv', 'tsv-header');
+            const aiAdviceResult = await fetchAndParse('./milli_ai_advice.tsv', 'ai-advice-tsv');
             aiAdviceData = aiAdviceResult.data;
 
             loadingStatus.textContent = '追加データを読み込み中...';
@@ -610,24 +617,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         personaSection.classList.remove('hidden');
     }
 
-    // ▼▼▼ 口コミ表示をオブジェクト配列対応に修正 ▼▼▼
     function displayCustomerFeedback(facilityName) {
-        // ヘッダー名をマッピング
-        const headerMap = {
-            FACILITY: '施設',
-            TIMESTAMP: 'タイムスタンプ',
-            SERVICE_SATISFACTION: '当施設の商品・サービスについて、総合的な満足度をお聞かせください。',
-            SERVICE_REASON: '当施設の商品・サービスで最も満足した点について、具体的に教えてください。',
-            FACILITY_SATISFACTION: '当施設の施設全体（清潔さ・雰囲気・設備など）について、総合的な満足度をお聞かせください。',
-            FACILITY_REASON: '当施設の施設全体で最も満足した点について、具体的に教えてください。',
-            INCONVENIENCE: '今回の旅行またはお出かけで、不便を感じたことはありましたか。',
-            INCONVENIENCE_REASON: '前の設問で「感じた」とお答えになった方にお聞きします。不便を感じたのはどのようなことですか。具体的に教えてください。',
-            NPS_SCORE: '今回訪れた 当施設 を友人や同僚におすすめしたい度合いを、0～10点で評価するとしたら、どのくらいですか。',
-            REQUEST: '当施設へのご意見・ご要望があればお聞かせください。',
-            NPS_REASON: '前の設問の評価の理由を教えてください。',
-            BIRTH_YEAR: 'あなたの生まれた年（西暦）を教えてください。',
-            PREFECTURE: 'お住まいの都道府県を教えてください。',
-            GENDER: 'あなたの性別を教えてください。'
+        // ▼▼▼ ヘッダー名からインデックスを取得するヘルパー関数 ▼▼▼
+        const getIndex = (headerName) => complainHeaders.indexOf(headerName);
+
+        const colIndex = {
+            FACILITY: getIndex('施設'),
+            TIMESTAMP: getIndex('タイムスタンプ'),
+            SERVICE_SATISFACTION: getIndex('当施設の商品・サービスについて、総合的な満足度をお聞かせください。'),
+            SERVICE_REASON: getIndex('当施設の商品・サービスで最も満足した点について、具体的に教えてください。'),
+            FACILITY_SATISFACTION: getIndex('当施設の施設全体（清潔さ・雰囲気・設備など）について、総合的な満足度をお聞かせください。'),
+            FACILITY_REASON: getIndex('当施設の施設全体で最も満足した点について、具体的に教えてください。'),
+            INCONVENIENCE: getIndex('今回の旅行またはお出かけで、不便を感じたことはありましたか。'),
+            INCONVENIENCE_REASON: getIndex('前の設問で「感じた」とお答えになった方にお聞きします。不便を感じたのはどのようなことですか。具体的に教えてください。'),
+            NPS_SCORE: getIndex('今回訪れた 当施設 を友人や同僚におすすめしたい度合いを、0～10点で評価するとしたら、どのくらいですか。'),
+            REQUEST: getIndex('当施設へのご意見・ご要望があればお聞かせください。'),
+            NPS_REASON: getIndex('前の設問の評価の理由を教えてください。'),
+            BIRTH_YEAR: getIndex('あなたの生まれた年（西暦）を教えてください。'),
+            PREFECTURE: getIndex('お住まいの都道府県を教えてください。'),
+            GENDER: getIndex('あなたの性別を教えてください。')
         };
 
         const satisfactionInfo = {
@@ -655,36 +663,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const filteredData = complainData
             .filter(row => {
-                if (!row || row[headerMap.FACILITY] !== facilityName) return false;
-                const timestamp = new Date(row[headerMap.TIMESTAMP]);
+                if (!row || row[colIndex.FACILITY] !== facilityName) return false;
+                const timestamp = new Date(row[colIndex.TIMESTAMP]);
                 return !isNaN(timestamp) && timestamp >= oneMonthAgo;
             })
-            .sort((a, b) => new Date(b[headerMap.TIMESTAMP]) - new Date(a[headerMap.TIMESTAMP]));
+            .sort((a, b) => new Date(b[colIndex.TIMESTAMP]) - new Date(a[colIndex.TIMESTAMP]));
 
         const feedback = { service: [], facility: [], inconvenience: [], request: [], nps: [] };
         
         filteredData.forEach(row => {
             const commonData = {
-                year: row[headerMap.BIRTH_YEAR] || '不明',
-                prefecture: row[headerMap.PREFECTURE] || '不明',
-                gender: row[headerMap.GENDER] || '不明'
+                year: row[colIndex.BIRTH_YEAR] || '不明',
+                prefecture: row[colIndex.PREFECTURE] || '不明',
+                gender: row[colIndex.GENDER] || '不明'
             };
 
-            const serviceReason = row[headerMap.SERVICE_REASON];
-            if (serviceReason) feedback.service.push({ ...commonData, text: serviceReason, satisfaction: row[headerMap.SERVICE_SATISFACTION] });
+            const serviceReason = row[colIndex.SERVICE_REASON];
+            if (serviceReason) feedback.service.push({ ...commonData, text: serviceReason, satisfaction: row[colIndex.SERVICE_SATISFACTION] });
 
-            const facilityReason = row[headerMap.FACILITY_REASON];
-            if (facilityReason) feedback.facility.push({ ...commonData, text: facilityReason, satisfaction: row[headerMap.FACILITY_SATISFACTION] });
+            const facilityReason = row[colIndex.FACILITY_REASON];
+            if (facilityReason) feedback.facility.push({ ...commonData, text: facilityReason, satisfaction: row[colIndex.FACILITY_SATISFACTION] });
 
-            const inconvenienceReason = row[headerMap.INCONVENIENCE_REASON];
-            if (row[headerMap.INCONVENIENCE] === '感じた' && inconvenienceReason) feedback.inconvenience.push({ ...commonData, text: inconvenienceReason, satisfaction: '感じた' });
+            const inconvenienceReason = row[colIndex.INCONVENIENCE_REASON];
+            if (row[colIndex.INCONVENIENCE] === '感じた' && inconvenienceReason) feedback.inconvenience.push({ ...commonData, text: inconvenienceReason, satisfaction: '感じた' });
             
-            const requestText = row[headerMap.REQUEST];
+            const requestText = row[colIndex.REQUEST];
             if (requestText) feedback.request.push({ ...commonData, text: requestText });
 
-            const npsReason = row[headerMap.NPS_REASON];
+            const npsReason = row[colIndex.NPS_REASON];
             if (npsReason) {
-                feedback.nps.push({ ...commonData, text: npsReason, score: row[headerMap.NPS_SCORE] });
+                feedback.nps.push({ ...commonData, text: npsReason, score: row[colIndex.NPS_SCORE] });
             }
         });
 
