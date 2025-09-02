@@ -323,6 +323,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const closeAiAdviceModalBtn = document.getElementById('close-ai-advice-modal-btn');
     const aiAdviceModalBody = document.getElementById('ai-advice-modal-body');
 
+    // ▼▼▼ 以前の正常動作していた際の列インデックス定義を復活 ▼▼▼
+    const complainColIndex = {
+        FACILITY: 1, TIMESTAMP: 2, SERVICE_SATISFACTION: 24, SERVICE_REASON: 25,
+        FACILITY_SATISFACTION: 26, FACILITY_REASON: 27, INCONVENIENCE: 28, INCONVENIENCE_REASON: 29,
+        NPS_SCORE: 30, REQUEST: 31, NPS_REASON: 42, BIRTH_YEAR: 35, PREFECTURE: 36, GENDER: 34,
+    };
+
     function parseCSVWithHeaders(text) {
         const lines = text.trim().replace(/\r/g, '').split('\n');
         if (lines.length < 2) return { data: [], key: '' };
@@ -357,7 +364,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return { data, key: facilityKey };
     }
     
-    // ▼▼▼ AIアドバイス用のTSVパーサー（改行対応） ▼▼▼
     function parseAIAdviceTSV(text) {
         const allLines = text.trim().replace(/\r/g, '').split('\n');
         if (allLines.length < 2) return { data: [], key: '' };
@@ -386,15 +392,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return { data, key: facilityKey };
     }
 
-    // ▼▼▼ 自由記述用のTSVパーサー（従来の配列形式）▼▼▼
-    function parseComplainTSV(text) {
+    // ▼▼▼ 自由記述用のパーサーを以前の正常なものに戻す ▼▼▼
+    function parseTSVAsArrays(text) {
         const lines = text.trim().replace(/\r/g, '').split('\n');
-        if (lines.length < 2) return { data: [], headers: [] };
-        const headers = lines.shift().split('\t').map(h => h.trim());
-        const data = lines.map(line => line.split('\t').map(val => val.trim().replace(/^"|"$/g, '')));
-        return { data, headers };
+        if (lines.length < 2) return [];
+        return lines.slice(1).map(line => line.split('\t').map(val => val.trim()));
     }
-
 
     async function fetchAndParse(url, format = 'csv') {
         const response = await fetch(url);
@@ -405,8 +408,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (format === 'ai-advice-tsv') {
             return parseAIAdviceTSV(cleanText);
         }
-        if (format === 'complain-tsv') {
-            return parseComplainTSV(cleanText);
+        if (format === 'complain-tsv-array') {
+            return parseTSVAsArrays(cleanText);
         }
         return parseCSVWithHeaders(cleanText);
     }
@@ -428,7 +431,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         analysisScreen.classList.add('hidden');
     };
 
-    let complainHeaders = [];
     async function loadData() {
         try {
             const loadingStatus = loadingMessage.querySelector('p');
@@ -444,9 +446,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             personaFacilityKey = personaResult.key;
 
             loadingStatus.textContent = '口コミデータを読み込み中...';
-            const complainResult = await fetchAndParse('./milli_complain.tsv', 'complain-tsv');
-            complainData = complainResult.data;
-            complainHeaders = complainResult.headers; // ヘッダーを保存
+            // ▼▼▼ 自由記述の読み込み形式を元に戻す ▼▼▼
+            complainData = await fetchAndParse('./milli_complain.tsv', 'complain-tsv-array');
             
             loadingStatus.textContent = 'AIアドバイスを準備中...';
             const aiAdviceResult = await fetchAndParse('./milli_ai_advice.tsv', 'ai-advice-tsv');
@@ -617,27 +618,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         personaSection.classList.remove('hidden');
     }
 
+    // ▼▼▼ 自由記述表示のロジックを以前の正常なものに戻す ▼▼▼
     function displayCustomerFeedback(facilityName) {
-        // ▼▼▼ ヘッダー名からインデックスを取得するヘルパー関数 ▼▼▼
-        const getIndex = (headerName) => complainHeaders.indexOf(headerName);
-
-        const colIndex = {
-            FACILITY: getIndex('施設'),
-            TIMESTAMP: getIndex('タイムスタンプ'),
-            SERVICE_SATISFACTION: getIndex('当施設の商品・サービスについて、総合的な満足度をお聞かせください。'),
-            SERVICE_REASON: getIndex('当施設の商品・サービスで最も満足した点について、具体的に教えてください。'),
-            FACILITY_SATISFACTION: getIndex('当施設の施設全体（清潔さ・雰囲気・設備など）について、総合的な満足度をお聞かせください。'),
-            FACILITY_REASON: getIndex('当施設の施設全体で最も満足した点について、具体的に教えてください。'),
-            INCONVENIENCE: getIndex('今回の旅行またはお出かけで、不便を感じたことはありましたか。'),
-            INCONVENIENCE_REASON: getIndex('前の設問で「感じた」とお答えになった方にお聞きします。不便を感じたのはどのようなことですか。具体的に教えてください。'),
-            NPS_SCORE: getIndex('今回訪れた 当施設 を友人や同僚におすすめしたい度合いを、0～10点で評価するとしたら、どのくらいですか。'),
-            REQUEST: getIndex('当施設へのご意見・ご要望があればお聞かせください。'),
-            NPS_REASON: getIndex('前の設問の評価の理由を教えてください。'),
-            BIRTH_YEAR: getIndex('あなたの生まれた年（西暦）を教えてください。'),
-            PREFECTURE: getIndex('お住まいの都道府県を教えてください。'),
-            GENDER: getIndex('あなたの性別を教えてください。')
-        };
-
         const satisfactionInfo = {
             'とても満足': { icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'green', label: 'とても満足' },
             '満足': { icon: 'M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'blue', label: '満足' },
@@ -663,36 +645,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const filteredData = complainData
             .filter(row => {
-                if (!row || row[colIndex.FACILITY] !== facilityName) return false;
-                const timestamp = new Date(row[colIndex.TIMESTAMP]);
+                if (row[complainColIndex.FACILITY] !== facilityName) return false;
+                const timestamp = new Date(row[complainColIndex.TIMESTAMP]);
                 return !isNaN(timestamp) && timestamp >= oneMonthAgo;
             })
-            .sort((a, b) => new Date(b[colIndex.TIMESTAMP]) - new Date(a[colIndex.TIMESTAMP]));
+            .sort((a, b) => new Date(b[complainColIndex.TIMESTAMP]) - new Date(a[complainColIndex.TIMESTAMP]));
 
         const feedback = { service: [], facility: [], inconvenience: [], request: [], nps: [] };
         
         filteredData.forEach(row => {
             const commonData = {
-                year: row[colIndex.BIRTH_YEAR] || '不明',
-                prefecture: row[colIndex.PREFECTURE] || '不明',
-                gender: row[colIndex.GENDER] || '不明'
+                year: row[complainColIndex.BIRTH_YEAR] || '不明',
+                prefecture: row[complainColIndex.PREFECTURE] || '不明',
+                gender: row[complainColIndex.GENDER] || '不明'
             };
 
-            const serviceReason = row[colIndex.SERVICE_REASON];
-            if (serviceReason) feedback.service.push({ ...commonData, text: serviceReason, satisfaction: row[colIndex.SERVICE_SATISFACTION] });
+            const serviceReason = row[complainColIndex.SERVICE_REASON];
+            if (serviceReason) feedback.service.push({ ...commonData, text: serviceReason, satisfaction: row[complainColIndex.SERVICE_SATISFACTION] });
 
-            const facilityReason = row[colIndex.FACILITY_REASON];
-            if (facilityReason) feedback.facility.push({ ...commonData, text: facilityReason, satisfaction: row[colIndex.FACILITY_SATISFACTION] });
+            const facilityReason = row[complainColIndex.FACILITY_REASON];
+            if (facilityReason) feedback.facility.push({ ...commonData, text: facilityReason, satisfaction: row[complainColIndex.FACILITY_SATISFACTION] });
 
-            const inconvenienceReason = row[colIndex.INCONVENIENCE_REASON];
-            if (row[colIndex.INCONVENIENCE] === '感じた' && inconvenienceReason) feedback.inconvenience.push({ ...commonData, text: inconvenienceReason, satisfaction: '感じた' });
+            const inconvenienceReason = row[complainColIndex.INCONVENIENCE_REASON];
+            if (row[complainColIndex.INCONVENIENCE] === '感じた' && inconvenienceReason) feedback.inconvenience.push({ ...commonData, text: inconvenienceReason, satisfaction: '感じた' });
             
-            const requestText = row[colIndex.REQUEST];
+            const requestText = row[complainColIndex.REQUEST];
             if (requestText) feedback.request.push({ ...commonData, text: requestText });
 
-            const npsReason = row[colIndex.NPS_REASON];
+            const npsReason = row[complainColIndex.NPS_REASON];
             if (npsReason) {
-                feedback.nps.push({ ...commonData, text: npsReason, score: row[colIndex.NPS_SCORE] });
+                feedback.nps.push({ ...commonData, text: npsReason, score: row[complainColIndex.NPS_SCORE] });
             }
         });
 
@@ -756,6 +738,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
         
+        // アクティブなタブがない場合、最初のタブをアクティブにする
         if (tabs.length > 0 && !document.querySelector('.feedback-tab-button.active')) {
             tabs[0].classList.add('active');
             contents.forEach(c => c.classList.add('hidden'));
