@@ -1,0 +1,93 @@
+name: Combine Monthly Tourism CSV
+
+# ワークフローが実行されるタイミングを定義
+on:
+  # 手動でワークフローを実行できるようにする
+  workflow_dispatch:
+  # 定期実行（毎日 JST 午前6時 / UTC 21時）
+  schedule:
+    - cron: '0 21 * * *'
+
+jobs:
+  build-and-commit:
+    runs-on: ubuntu-latest
+
+    # このジョブがリポジトリにファイルを書き込む（コミット＆プッシュ）権限を持つことを指定
+    permissions:
+      contents: write
+
+    steps:
+      # ステップ1: リポジトリのチェックアウト
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ステップ2: 直近12ヶ月分のCSVをダウンロードして結合
+      - name: Combine last 12 months CSV files
+        run: |
+          set -e # エラーが発生したらスクリプトを中断する
+
+          # ▼▼▼ 変更点1: 保存先ディレクトリとファイルパスを指定 ▼▼▼
+          OUTPUT_DIR="fukui"
+          OUTPUT_FILE="${OUTPUT_DIR}/ftas_latest_1year.csv"
+          
+          # 保存先ディレクトリがなければ作成する
+          mkdir -p "$OUTPUT_DIR"
+          
+          BASE_URL="https://raw.githubusercontent.com/code4fukui/fukui-kanko-survey/master/monthly"
+          
+          # 最初に処理するファイルかどうかを判定するフラグ
+          is_first_file=true
+
+          # 一時的に結合結果を保存するファイルを作成
+          TEMP_OUTPUT_FILE=$(mktemp)
+
+          echo "Starting CSV combination process..."
+
+          # 今月から遡って12ヶ月分のファイル名を生成してループ
+          for i in $(seq 0 11); do
+            # YYYYMM形式の年月を計算
+            year_month=$(date -d "now - $i month" +%Y%m)
+            file_name="${year_month}.csv"
+            file_url="${BASE_URL}/${file_name}"
+
+            # curlでHTTPステータスコードを取得し、ファイルの存在を確認
+            http_status=$(curl -o /dev/null -s -w "%{http_code}" "$file_url")
+
+            if [ "$http_status" -eq 200 ]; then
+              echo "✅ Found: ${file_name}. Processing..."
+              if [ "$is_first_file" = true ]; then
+                # 1つ目のファイルはヘッダーごとダウンロードして一時ファイルに保存
+                curl -s "$file_url" > "$TEMP_OUTPUT_FILE"
+                is_first_file=false # フラグを更新
+              else
+                # 2つ目以降のファイルは、ヘッダー行(1行目)を除いて追記
+                curl -s "$file_url" | tail -n +2 >> "$TEMP_OUTPUT_FILE"
+              fi
+            else
+              echo "⚠️ Skipping, not found: ${file_name}"
+            fi
+          done
+
+          # 正常に処理が完了したら、一時ファイルを出力ファイルにリネーム
+          mv "$TEMP_OUTPUT_FILE" "$OUTPUT_FILE"
+          echo "Successfully created ${OUTPUT_FILE} ✨"
+
+      # ステップ3: 変更があればコミット＆プッシュ
+      - name: Commit and push if changes
+        run: |
+          # gitのコミットユーザー情報を設定
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # ▼▼▼ 変更点2: コミット対象のファイルパスを修正 ▼▼▼
+          git add fukui/ftas_latest_1year.csv
+          
+          # ファイルに変更がある場合のみコミットとプッシュを実行
+          if ! git diff --staged --quiet; then
+            # ▼▼▼ 変更点3: コミットメッセージを分かりやすく修正 ▼▼▼
+            git commit -m "Update fukui/ftas_latest_1year.csv with latest data"
+            git push
+            echo "Changes committed and pushed."
+          else
+            echo "No changes detected. Nothing to commit."
+          fi
