@@ -2,7 +2,7 @@ name: Sync milli CSV/TSV (public Sheets)
 
 on:
   schedule:
-    - cron: '15 20 * * *'   # 毎日 05:15 JST (= 20:15 UTC)
+    - cron: '10 21 * * *'   # 毎日 06:10 JST (= 21:10 UTC)
   workflow_dispatch:
 
 permissions:
