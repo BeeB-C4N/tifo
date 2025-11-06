@@ -94,7 +94,7 @@
             background-color: white;
             padding: 2rem;
             border-radius: 1.5rem;
-      _B_     max-width: 90%;
+            max-width: 90%;
             width: 650px;
             max-height: 85vh;
             display: flex;
@@ -133,7 +133,8 @@
     </style>
 </head>
 <body>
-        <div id="home-screen" class="min-h-screen flex flex-col items-center justify-center p-4 text-center">
+    <!-- ホーム画面 -->
+    <div id="home-screen" class="min-h-screen flex flex-col items-center justify-center p-4 text-center">
         <div class="flex items-center justify-center gap-4 mb-4">
             <div class="w-24 h-24">
                 <a href="https://codefornoto.github.io/TIFO/" target="_blank" rel="noopener noreferrer">
@@ -157,7 +158,8 @@
         </div>
     </div>
 
-        <div id="analysis-screen" class="hidden p-4 md:p-8 max-w-5xl mx-auto">
+    <!-- 分析結果画面 -->
+    <div id="analysis-screen" class="hidden p-4 md:p-8 max-w-5xl mx-auto">
         <header class="flex items-center justify-between mb-8">
             <h1 id="facility-title" class="text-3xl font-bold"></h1>
             <button id="back-button" class="tifo-button">戻る</button>
@@ -200,7 +202,7 @@
                                  <div class="progress-bar-bg"><div class="progress-bar" style="width: 0%;"></div></div>
                                  <p class="persona-counts text-right text-sm text-gray-500"></p>
                              </div>
-                         </div>
+                  _B_       </div>
                      </div>
                  </template>
             </section>
@@ -221,7 +223,7 @@
                          <div id="feedback-content-service" class="feedback-content custom-scrollbar space-y-4"></div>
                          <div id="feedback-content-facility" class="feedback-content custom-scrollbar space-y-4 hidden"></div>
                          <div id="feedback-content-inconvenience" class="feedback-content custom-scrollbar space-y-4 hidden"></div>
-                         <div id="feedback-content-request" class="feedback-content custom-scrollbar space-y-4 hidden"></div>
+              _B_         <div id="feedback-content-request" class="feedback-content custom-scrollbar space-y-4 hidden"></div>
                          <div id="feedback-content-nps" class="feedback-content custom-scrollbar space-y-4 hidden"></div>
                      </div>
                  </div>
@@ -229,7 +231,7 @@
 
             <section id="ai-advice-section">
                 <h2 class="text-2xl font-bold mb-4 flex items-center">TifoちゃんからのAIアドバイス</h2>
-                <div class="flex items-stretch md:items-start gap-4">
+m             <div class="flex items-stretch md:items-start gap-4">
                     <img src="../tifo.png" alt="TIFOちゃん" class="h-32 w-32 object-contain flex-shrink-0 hidden md:block">
                     <div class="bg-white p-6 rounded-xl md:rounded-r-xl md:rounded-bl-xl relative w-full flex-1 border border-gray-200">
                         <div class="absolute left-[-10px] top-[15px] w-0 h-0 border-t-[10px] border-t-transparent border-r-[10px] border-r-white border-b-[10px] border-b-transparent hidden md:block"></div>
@@ -237,7 +239,7 @@
                             <div>
                                 <p class="text-gray-800 font-bold text-lg"><strong id="ai-advice-facility-name"></strong>さんへ</p>
                                 <p class="text-gray-600 mt-2">ペルソナと自由記述の意見を元にアドバイスを考えたにゃ🐾</p>
-                _B_           </div>
+                            </div>
                             <div class="mt-auto pt-4 text-center md:text-right">
                                 <button id="open-ai-advice-btn" class="tifo-button">AIからのアドバイスを見る</button>
                             </div>
@@ -276,7 +278,8 @@
         </main>
     </div>
 
-        <div id="disclaimer-modal" class="modal-overlay hidden">
+    <!-- ▼▼▼ 免責事項モーダル構造修正 ▼▼▼ -->
+    <div id="disclaimer-modal" class="modal-overlay hidden">
         <div class="modal-content !w-[600px]">
             <div class="flex-shrink-0 flex justify-between items-center pb-4 mb-4 border-b">
                 <h2 class="text-2xl font-bold">免責事項</h2>
@@ -285,13 +288,18 @@
                 </button>
             </div>
             <div id="disclaimer-text" class="flex-grow overflow-y-auto custom-scrollbar pr-2 text-sm text-gray-600 leading-relaxed space-y-2" style="max-height: 60vh;">
-                            </div>
+                <!-- Content will be inserted here -->
+            </div>
             <div class="flex-shrink-0 pt-6">
                 <button id="close-modal-button" class="tifo-button w-full">閉じる</button>
             </div>
         </div>
     </div>
-            <div id="ai-advice-modal" class="modal-overlay hidden">
+    <!-- ▲▲▲ 免責事項モーダル構造修正 ▲▲▲ -->
+
+
+    <!-- AIアドバイスモーダル -->
+    <div id="ai-advice-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="flex-shrink-0 flex justify-between items-center border-b border-gray-200 pb-4 mb-4">
                 <h2 class="text-xl font-bold text-gray-800">TifoちゃんからのAIアドバイス</h2>
@@ -304,7 +312,8 @@
         </div>
     </div>
 
-        <div id="ranking-modal" class="modal-overlay hidden">
+    <!-- ▼▼▼ 【新規追加】グループ別ランキングモーダル ▼▼▼ -->
+    <div id="ranking-modal" class="modal-overlay hidden">
         <div class="modal-content !w-[600px]">
             <div class="flex-shrink-0 flex justify-between items-center pb-4 mb-4 border-b">
                 <h2 id="ranking-modal-title" class="text-xl font-bold text-gray-800">ランキング</h2>
@@ -314,11 +323,15 @@
             </div>
             <div id="ranking-modal-body" class="flex-grow overflow-y-auto custom-scrollbar pr-2" style="max-height: 65vh;">
                 <ol class="space-y-2" id="ranking-modal-list">
-                                    </ol>
+                    <!-- ランキングがここに挿入されます -->
+                </ol>
             </div>
         </div>
     </div>
-    <script>
+    <!-- ▲▲▲ 【新規追加】グループ別ランキングモーダル ▲▲▲ -->
+
+
+<script>
 document.addEventListener('DOMContentLoaded', async () => {
     let surveyData = [];
     let personaData = [];
@@ -511,7 +524,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     backButton.addEventListener('click', () => { location.hash = ''; });
     backButtonBottom.addEventListener('click', () => { location.hash = ''; });
     window.addEventListener('hashchange', handleRouteChange);
-   nbsp;
+    
+    // ▼▼▼ 【修正】nbsp; を削除 ▼▼▼
+    // (不要な文字が挿入されていたため削除)
+    
     // ▼▼▼ 免責事項モーダルのイベントリスナー修正 ▼▼▼
     const openDisclaimerModal = async () => {
          try {
@@ -595,7 +611,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (index === 2) li.classList.add('!bg-orange-50'); 
                 
                 li.innerHTML = `
-                    <div class="flex items-center truncate">
+                    <div class="flex items-center truncate min-w-0">
                         <span class="font-bold text-gray-700 w-8 text-right mr-3 flex-shrink-0">${index + 1}.</span>
                         <span class="flex-1 truncate" title="${facility.name}">${facility.name}</span>
                     </div>
@@ -624,9 +640,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const rankInfo = getRank(score, dataKey);
         document.getElementById(`${idPrefix}-rank`).textContent = `(全${rankInfo.total}施設中 ${rankInfo.rank}位)`;
     }
+    
+    // ▼▼▼ 【修正】getTopN 関数 (F を削除) ▼▼▼
     function getTopN(groups, n) {
         return Object.entries(groups).filter(([key, value]) => Number(value) > 0 && key !== 'null' && key !== 'undefined').sort(([, a], [, b]) => Number(b) - Number(a)).slice(0, n);
-F   }
+    }
+    // ▲▲▲ 【修正】getTopN 関数 ▲▲▲
     
     // ▼▼▼ 【修正】renderRankingList 関数 (イベントリスナー追加) ▼▼▼
     function renderRankingList(elementId, topData, nameMap) {
@@ -663,7 +682,7 @@ F   }
                     showRankingModal(key, name);
                 } else {
                     console.warn(`Ranking data key "${key}" not found or invalid.`);
-                }
+D               }
             });
             
             listElement.appendChild(li);
@@ -693,8 +712,7 @@ F   }
                     count: personaRow[`ps${i}_カウント`],
                 });
             }
-        }
-        if (personas.length === 0) {
+      D   if (personas.length === 0) {
             personaSection.classList.add('hidden');
             return;
         }
@@ -749,7 +767,7 @@ F   }
             green: { icon: 'text-green-500', label: 'text-green-800', bg: 'bg-green-100' },
             blue: { icon: 'text-blue-500', label: 'text-blue-800', bg: 'bg-blue-100' },
             yellow: { icon: 'text-yellow-500', label: 'text-yellow-800', bg: 'bg-yellow-100' },
-            red: { icon: 'text-red-500', label: 'text-red-800', bg: 'bg-red-100' },
+M         red: { icon: 'text-red-500', label: 'text-red-800', bg: 'bg-red-100' },
             gray: { icon: 'text-gray-500', label: 'text-gray-800', bg: 'bg-gray-200' },
             orange: { icon: 'text-orange-500', label: 'text-orange-800', bg: 'bg-orange-100' },
             cyan: { icon: 'text-cyan-500', label: 'text-cyan-800', bg: 'bg-cyan-100' },
@@ -807,14 +825,14 @@ F   }
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center">
                                 <p class="px-2 py-0.5 text-xs font-semibold rounded-full ${colors.bg} ${colors.label} inline-block">${info.label}</p>
-                                ${npsScoreBadge}
+D                             ${npsScoreBadge}
                             </div>
                             <p class="mt-2 text-gray-700 text-sm leading-relaxed break-words">${comment.text}</p>
                             <p class="mt-3 text-xs text-gray-500">${comment.year}年生まれ・${comment.prefecture}在住・${comment.gender}</p>
                         </div>
                     </div>
                 </div>
-            `;
+D         `;
         };
 
         const renderComments = (containerId, comments, type) => {
@@ -829,7 +847,7 @@ F   }
         renderComments('feedback-content-service', feedback.service, 'service');
         renderComments('feedback-content-facility', feedback.facility, 'facility');
         renderComments('feedback-content-inconvenience', feedback.inconvenience, 'inconvenience');
-        renderComments('feedback-content-request', feedback.request, 'request');
+all       renderComments('feedback-content-request', feedback.request, 'request');
         renderComments('feedback-content-nps', feedback.nps, 'nps');
         
         const tabs = document.querySelectorAll('.feedback-tab-button');
@@ -837,7 +855,7 @@ F   }
         
         tabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
-                e.preventDefault();
+A               e.preventDefault();
                 tabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 
@@ -927,16 +945,17 @@ F   }
             '北海道': data['北海道'], '青森県': data['青森県'], '岩手県': data['岩手県'], '宮城県': data['宮城県'], '秋田県': data['秋田県'], '山形県': data['山形県'], '福島県': data['福島県'],
             '茨城県': data['茨城県'], '栃木県': data['栃木県'], '群馬県': data['群馬県'], '埼玉県': data['埼玉県'], '千葉県': data['千葉県'], '東京都': data['東京都'], '神奈川県': data['神奈川県'],
             '新潟県': data['新潟県'], '富山県': data['富山県'], '石川県': data['石川県'], '福井県': data['福井県'], '山梨県': data['山梨県'], '長野県': data['長野県'], '岐阜県': data['岐阜県'],
-            '静岡県': data['静岡県'], '愛知県': data['愛知県'], '三重県': data['三重県'], '滋賀県': data['滋賀県'], '京都府': data['京都府'], '大阪府': data['大阪府'], '兵庫県': data['兵庫県'],
+D         '静岡県': data['静岡県'], '愛知県': data['愛知県'], '三重県': data['三重県'], '滋賀県': data['滋賀県'], '京都府': data['京都府'], '大阪府': data['大阪府'], '兵庫県': data['兵庫県'],
             '奈良県': data['奈良県'], '和歌山県': data['和歌山県'], '鳥取県': data['鳥取県'], '島根県': data['島根県'], '岡山県': data['岡山県'], '広島県': data['広島県'], '山口県': data['山口県'],
-T         '徳島県': data['徳島県'], '香川県': data['香川県'], '愛媛県': data['愛媛県'], '高知県': data['高知県'], '福岡県': data['福岡県'], '佐賀県': data['佐賀県'], '長崎県': data['長崎県'],
+            // ▼▼▼ 【修正】T を削除 ▼▼▼
+            '徳島県': data['徳島県'], '香川県': data['香川県'], '愛媛県': data['愛媛県'], '高知県': data['高知県'], '福岡県': data['福岡県'], '佐賀県': data['佐賀県'], '長崎県': data['長崎県'],
             '熊本県': data['熊本県'], '大分県': data['大分県'], '宮崎県': data['宮崎県'], '鹿児島県': data['鹿児島県'], '沖縄県': data['沖縄県']
         };
         
         // --- renderRankingList呼び出し (nameMap を渡す) ---
         renderRankingList('age-ranking', getTopN(ageGroups, 5), dataKeyToFriendlyName);
         renderRankingList('gender-ranking', getTopN(genderGroups, 5), dataKeyToFriendlyName);
-        renderRankingList('stay-duration-ranking', getTopN(stayDurationGroups, 5), dataKeyToFriendlyName);
+s       renderRankingList('stay-duration-ranking', getTopN(stayDurationGroups, 5), dataKeyToFriendlyName);
         renderRankingList('companion-ranking', getTopN(companionGroups, 5), dataKeyToFriendlyName);
         renderRankingList('purpose-ranking', getTopN(purposeGroups, 5), dataKeyToFriendlyName);
         renderRankingList('income-ranking', getTopN(incomeGroups, 5), dataKeyToFriendlyName);
@@ -946,7 +965,7 @@ T         '徳島県': data['徳島県'], '香川県': data['香川県'], '�
         let finalAdvice = '分析データを元に、さらなる改善点を探してみましょう！';
         if (adviceLines.length > 0) {
             const randomIndex = Math.floor(Math.random() * adviceLines.length);
-            finalAdvice = adviceLines[randomIndex];
+f           finalAdvice = adviceLines[randomIndex];
         }
         adviceContainer.innerHTML = `<strong>${facilityName}さんへ</strong><br><br>${finalAdvice}`;
     }
