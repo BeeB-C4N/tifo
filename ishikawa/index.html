@@ -641,7 +641,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const openAttributeRankingModal = (categoryTitle, displayName, colNamesCSV) => {
         attributeRankingModalTitle.textContent = `${displayName}（${categoryTitle}）が多い施設 TOP30`;
         
-        const colNames = colNamesCSV.split(','); // ['20代'] や ['スキー...', 'その他...']
+        // カンマを含む列名があるため、パイプ(|)で分割するように変更
+        const colNames = colNamesCSV.split('|');
 
         const rankingData = surveyData.map(facilityData => {
             let totalPercentage = 0;
@@ -768,8 +769,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             // 表示名から surveyData の列名(複数可)を取得
             const colNames = Object.keys(categoryInfo.map).filter(key => categoryInfo.map[key] === displayName);
             
-            // data属性に行名(カンマ区切り)とカテゴリタイトル、表示名を設定
-            li.setAttribute('data-col-names', colNames.join(','));
+            // data属性に行名(パイプ区切り)とカテゴリタイトル、表示名を設定 (カンマを含む列名に対応するため)
+            li.setAttribute('data-col-names', colNames.join('|'));
             li.setAttribute('data-category-title', categoryInfo.title);
             li.setAttribute('data-display-name', displayName);
             
