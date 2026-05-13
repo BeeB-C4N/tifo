@@ -177,17 +177,6 @@
 
 <div id="app-container">
 
-    <!-- 0. ローディング画面 -->
-    <div id="screen-loading" class="screen active bg-white flex items-center justify-center">
-        <div class="flex flex-col items-center">
-            <svg class="animate-spin h-10 w-10 text-[var(--tifo-primary)] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p id="loading-text" class="text-gray-500 font-bold">データ読み込み中...</p>
-        </div>
-    </div>
-
     <!-- 1. 施設選択画面 -->
     <div id="screen-facility" class="screen bg-white">
         <header class="p-4 border-b bg-[var(--tifo-primary)] flex justify-center items-center shadow-sm z-10 relative text-white">
@@ -219,6 +208,17 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                 </button>
                 <div class="flex items-center gap-2 cursor-pointer hover:bg-white/10 p-1 rounded-lg transition-colors overflow-hidden flex-1" onclick="openProfileModal()">
+                    <div id="chat-header-avatar" class="flex-shrink-0"></div>
+                    <h1 class="text-md font-bold leading-tight truncate" id="chat-header-name">ユーザ名</h1>
+                </div>
+            </div>
+            <div class="text-right w-2/5 pl-2 flex flex-col justify-center">
+                <span class="text-[0.65rem] text-white/70 leading-none mb-0.5">施設名</span>
+                <p class="text-xs font-bold truncate leading-tight" id="chat-header-facility">施設名</p>
+            </div>
+        </header>
+        
+        <div class="p-4 overflow-y-auto custom-scrollbar flex-1 flex flex-col gap-4" id="chat-messages">
             <!-- チャットメッセージがここに追加される -->
         </div>
 
@@ -292,7 +292,7 @@
             // 開発環境などでファイルが取得できない場合のフォールバックデータ
             surveyData = [
                 {
-                    id: "u1", facility: "A STORE WAJIMA", gender: "女", birth_year: 1996, ageGroup: "30代", pref: "石川県", city: "金沢市", income: "900万円以上 1,000万円未満", companion: "夫婦2人", purpose: "ポケふた",
+                    id: "u1", timestamp: "5/10/2026 16:25:22", rawDate: new Date("5/10/2026 16:25:22"), facility: "A STORE WAJIMA", gender: "女", birth_year: 1996, ageGroup: "30代", pref: "石川県", city: "金沢市", income: "900万円以上 1,000万円未満", companion: "夫婦2人", purpose: "ポケふた",
                     stay_total: "日帰り", stay_ishikawa: "4泊以上", stay_area: "金沢エリア", transport_to_ishikawa: "自家用車", transport_to_facility: "自家用車", visit_count: "初めて", info_source: "インターネット・アプリ", revisit_intent: "また行きたい（1年以内）",
                     service_satisfaction: "とても満足", service_reason: "品揃えが豊富で、見ているだけでも楽しかったです。", facility_satisfaction: "とても満足", facility_reason: "お店の雰囲気がおしゃれで、とても居心地が良かったです。", inconvenience: "感じなかった", inconvenience_reason: "", facility_nps: 7, facility_nps_reason: "ポケふたをもう少し増やして欲しいですね。", pref_nps: 10, pref_nps_reason: "景色も良くてご飯も美味しいので、ぜひ薦めたいです！"
                 }
@@ -308,6 +308,7 @@
         const getIdx = (keyword) => headers.findIndex(h => typeof h === 'string' && h.includes(keyword));
 
         const idx = {
+            timestamp: getIdx("タイムスタンプ"),
             facility: getIdx("施設"),
             gender: getIdx("性別"),
             birth_year: getIdx("生まれた年"),
@@ -357,6 +358,8 @@
 
             surveyData.push({
                 id: "u" + i,
+                timestamp: getVal(idx.timestamp),
+                rawDate: getVal(idx.timestamp) ? new Date(getVal(idx.timestamp)) : new Date(0),
                 facility: getVal(idx.facility),
                 gender: getVal(idx.gender),
                 birth_year: getVal(idx.birth_year),
@@ -501,7 +504,11 @@
     function renderUsers() {
         const container = document.getElementById('user-list');
         container.innerHTML = '';
-        const users = surveyData.filter(d => d.facility === currentFacility);
+        
+        // 施設で絞り込み、タイムスタンプが新しい順（降順）にソート
+        const users = surveyData
+            .filter(d => d.facility === currentFacility)
+            .sort((a, b) => b.rawDate - a.rawDate);
         
         users.forEach(user => {
             const el = document.createElement('div');
@@ -510,14 +517,28 @@
             
             const avatar = getAvatarSvg(user.gender, user.ageGroup, 48);
             
+            // タイムスタンプの表示フォーマット（例: 5/10 16:25）
+            let timeStr = '';
+            if (user.timestamp) {
+                const d = new Date(user.timestamp);
+                if (!isNaN(d.getTime())) {
+                    timeStr = `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+                } else {
+                    timeStr = user.timestamp; // パース失敗時はそのまま表示
+                }
+            }
+            
             el.innerHTML = `
                 <div class="flex-shrink-0">${avatar}</div>
                 <div class="flex-1 min-w-0">
-                    <h4 class="font-bold text-gray-800 text-md truncate">${user.ageGroup} ${user.gender}</h4>
+                    <div class="flex justify-between items-baseline">
+                        <h4 class="font-bold text-gray-800 text-md truncate">${user.ageGroup} ${user.gender}</h4>
+                        <span class="text-xs text-gray-400 flex-shrink-0 ml-2">${timeStr}</span>
+                    </div>
                     <p class="text-xs text-gray-500 truncate mt-1">同行者: ${user.companion}</p>
                     <p class="text-xs text-gray-500 truncate">居住地: ${user.pref} ${user.city}</p>
                 </div>
-                <div class="text-[var(--tifo-primary)]">
+                <div class="text-[var(--tifo-primary)] ml-1">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
                 </div>
             `;
