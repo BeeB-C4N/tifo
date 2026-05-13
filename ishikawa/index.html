@@ -361,6 +361,19 @@
     </div>
     <!-- ▲▲▲ 属性ランキングモーダル（新規追加） ▲▲▲ -->
 
+    <!-- ▼▼▼ チャットモーダル（新規追加） ▼▼▼ -->
+    <div id="chat-modal" class="modal-overlay hidden">
+        <div class="modal-content !p-0 !w-[95%] sm:!w-[500px] !h-[90vh] !max-h-[95vh] flex flex-col relative overflow-hidden rounded-2xl bg-white">
+            <!-- 閉じるボタン -->
+            <button id="close-chat-modal-btn" class="absolute top-3 right-3 z-10 bg-white/90 hover:bg-white text-gray-600 hover:text-gray-900 rounded-full p-2 shadow-md transition-all border border-gray-200">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <!-- iframe -->
+            <iframe id="chat-iframe" class="w-full h-full border-0 flex-grow" src=""></iframe>
+        </div>
+    </div>
+    <!-- ▲▲▲ チャットモーダル（新規追加） ▲▲▲ -->
+
 
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
@@ -399,6 +412,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const attributeRankingModalTitle = document.getElementById('attribute-ranking-modal-title');
     const attributeRankingModalList = document.getElementById('attribute-ranking-modal-list');
     // ▲▲▲ 属性ランキングモーダル（新規追加） ▲▲▲
+
+    // ▼▼▼ チャットモーダル ▼▼▼
+    const chatModal = document.getElementById('chat-modal');
+    const openChatModalBtn = document.getElementById('open-chat-modal-btn');
+    const closeChatModalBtn = document.getElementById('close-chat-modal-btn');
+    const chatIframe = document.getElementById('chat-iframe');
+    // ▲▲▲ チャットモーダル ▲▲▲
 
     const complainColIndex = {
         FACILITY: 1, TIMESTAMP: 2, SERVICE_SATISFACTION: 24, SERVICE_REASON: 25,
@@ -673,6 +693,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
     // ▲▲▲ 属性ランキングモーダルイベント（新規追加） ▲▲▲
+
+    // ▼▼▼ チャットモーダルイベント追加 ▼▼▼
+    openChatModalBtn.addEventListener('click', () => {
+        const facilityName = facilitySelect.value;
+        if (facilityName) {
+            // URLエンコードしてiframeのsrcに設定
+            chatIframe.src = `https://beeb-c4n.github.io/tifo/ishikawa/chat/#${encodeURIComponent(facilityName)}`;
+            chatModal.classList.remove('hidden');
+        }
+    });
+
+    const closeChatModal = () => {
+        chatModal.classList.add('hidden');
+        // モーダルを閉じたときに中身をリセットしたい場合は以下を有効化
+        // chatIframe.src = '';
+    };
+
+    closeChatModalBtn.addEventListener('click', closeChatModal);
+    chatModal.addEventListener('click', (e) => {
+        // モーダルの背景（外側）をクリックしたときにも閉じる
+        if (e.target === chatModal) {
+            closeChatModal();
+        }
+    });
+    // ▲▲▲ チャットモーダルイベント追加 ▲▲▲
 
 
     // --- 分析ロジック ---
