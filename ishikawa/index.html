@@ -64,9 +64,7 @@
         .rank-2 { background-color: #C0C0C0; }
         .rank-3 { background-color: #CD7F32; }
         .rank-4, .rank-5 { background-color: #A9A9A9; }
-        /* ▼▼▼ TOP30ランキング用にスタイル追加 ▼▼▼ */
         .rank-badge.rank-default { background-color: #A9A9A9; }
-        /* ▲▲▲ TOP30ランキング用にスタイル追加 ▲▲▲ */
 
         .progress-bar-bg { background-color: #EDF2F7; border-radius: 9999px; overflow: hidden; height: 1.25rem; }
         .progress-bar {
@@ -113,13 +111,11 @@
              transform: translateY(-20px);
              opacity: 0;
         }
-        /* ▼▼▼ モーダル内コンテンツのスクロールバー ▼▼▼ */
         .modal-body-scrollable {
             flex-grow: 1;
             overflow-y: auto;
-            min-height: 0; /* flex-growとoverflow-yを正しく機能させるため */
+            min-height: 0; 
         }
-        /* ▲▲▲ モーダル内コンテンツのスクロールバー ▲▲▲ */
 
         .feedback-tab-button {
             padding: 0.5rem 0.75rem;
@@ -138,9 +134,7 @@
             border-bottom-color: var(--tifo-primary);
         }
         .feedback-content {
-            /* ▼▼▼ 高さを固定値から調整 ▼▼▼ */
-            height: 30rem; /* 高さを少し調整 */
-            /* ▲▲▲ 高さを固定値から調整 ▲▲▲ */
+            height: 30rem;
             overflow-y: auto;
         }
         .custom-scrollbar::-webkit-scrollbar { width: 8px; }
@@ -161,7 +155,6 @@
                     </svg>
                 </a>
             </div>
-            <!-- パスは環境に合わせて調整してください -->
             <img src="../tifo.png" alt="TIFOちゃん" class="h-20 w-20 object-contain">
         </div>
         <p class="text-lg text-gray-600 mb-8">観光猫型AIアドバイザリー</p>
@@ -241,6 +234,10 @@
                              <button data-tab="inconvenience" class="feedback-tab-button">不便な点</button>
                              <button data-tab="request" class="feedback-tab-button">リクエスト</button>
                              <button data-tab="nps" class="feedback-tab-button">NPSの理由</button>
+                             <!-- ▼▼▼ 新しいタブを追加 ▼▼▼ -->
+                             <button data-tab="facility-request" class="feedback-tab-button">当施設への要望</button>
+                             <button data-tab="ishikawa-request" class="feedback-tab-button">石川県への要望</button>
+                             <!-- ▲▲▲ 新しいタブを追加 ▲▲▲ -->
                          </nav>
                      </div>
                      <div class="p-6 bg-gray-50">
@@ -249,6 +246,10 @@
                          <div id="feedback-content-inconvenience" class="feedback-content custom-scrollbar space-y-4 hidden"></div>
                          <div id="feedback-content-request" class="feedback-content custom-scrollbar space-y-4 hidden"></div>
                          <div id="feedback-content-nps" class="feedback-content custom-scrollbar space-y-4 hidden"></div>
+                         <!-- ▼▼▼ 新しいタブのコンテンツ枠を追加 ▼▼▼ -->
+                         <div id="feedback-content-facility-request" class="feedback-content custom-scrollbar space-y-4 hidden"></div>
+                         <div id="feedback-content-ishikawa-request" class="feedback-content custom-scrollbar space-y-4 hidden"></div>
+                         <!-- ▲▲▲ 新しいタブのコンテンツ枠を追加 ▲▲▲ -->
                      </div>
                  </div>
             </section>
@@ -256,7 +257,6 @@
             <section id="ai-advice-section">
                 <h2 class="text-2xl font-bold mb-4 flex items-center">TifoちゃんからのAIアドバイス</h2>
                 <div class="flex items-stretch md:items-start gap-4">
-                    <!-- パスは環境に合わせて調整してください -->
                     <img src="../tifo.png" alt="TIFOちゃん" class="h-32 w-32 object-contain flex-shrink-0 hidden md:block">
                     <div class="bg-white p-6 rounded-xl md:rounded-r-xl md:rounded-bl-xl relative w-full flex-1 border border-gray-200">
                         <div class="absolute left-[-10px] top-[15px] w-0 h-0 border-t-[10px] border-t-transparent border-r-[10px] border-r-white border-b-[10px] border-b-transparent hidden md:block"></div>
@@ -290,7 +290,6 @@
             <section>
                  <h2 class="text-2xl font-bold mb-4 flex items-center">Tifoちゃんからのアドバイス</h2>
                  <div class="flex items-start gap-4">
-                        <!-- パスは環境に合わせて調整してください -->
                         <img src="../tifo.png" alt="TIFOちゃん" class="h-32 w-32 object-contain flex-shrink-0">
                         <div class="bg-white p-4 rounded-r-xl rounded-bl-xl relative w-full">
                              <div class="absolute left-[-10px] top-[15px] w-0 h-0 border-t-[10px] border-t-transparent border-r-[10px] border-r-white border-b-[10px] border-b-transparent"></div>
@@ -314,11 +313,9 @@
                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            <!-- ▼▼▼ modal-body-scrollable クラス追加 ▼▼▼ -->
             <div id="disclaimer-text" class="modal-body-scrollable custom-scrollbar pr-2 text-sm text-gray-600 leading-relaxed space-y-2">
                 <!-- Content will be inserted here -->
             </div>
-            <!-- ▲▲▲ modal-body-scrollable クラス追加 ▲▲▲ -->
             <div class="flex-shrink-0 pt-6">
                 <button id="close-modal-button" class="tifo-button w-full">閉じる</button>
             </div>
@@ -335,14 +332,12 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            <!-- ▼▼▼ modal-body-scrollable クラス追加 ▼▼▼ -->
             <div id="ai-advice-modal-body" class="modal-body-scrollable custom-scrollbar pr-2 whitespace-pre-wrap text-gray-700 leading-relaxed">
             </div>
-            <!-- ▲▲▲ modal-body-scrollable クラス追加 ▲▲▲ -->
         </div>
     </div>
 
-    <!-- ▼▼▼ 属性ランキングモーダル（新規追加） ▼▼▼ -->
+    <!-- 属性ランキングモーダル -->
     <div id="attribute-ranking-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="flex-shrink-0 flex justify-between items-center border-b border-gray-200 pb-4 mb-4">
@@ -351,7 +346,6 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            <!-- スクロール可能なリストコンテナ -->
             <div class="modal-body-scrollable custom-scrollbar pr-2">
                 <ol id="attribute-ranking-modal-list" class="space-y-3">
                     <!-- ランキングがここに挿入されます -->
@@ -359,20 +353,16 @@
             </div>
         </div>
     </div>
-    <!-- ▲▲▲ 属性ランキングモーダル（新規追加） ▲▲▲ -->
 
-    <!-- ▼▼▼ チャットモーダル（新規追加） ▼▼▼ -->
+    <!-- チャットモーダル -->
     <div id="chat-modal" class="modal-overlay hidden">
         <div class="modal-content !p-0 !w-[95%] sm:!w-[500px] !h-[90vh] !max-h-[95vh] flex flex-col relative overflow-hidden rounded-2xl bg-white">
-            <!-- 閉じるボタン -->
             <button id="close-chat-modal-btn" class="absolute top-3 right-3 z-10 bg-white/90 hover:bg-white text-gray-600 hover:text-gray-900 rounded-full p-2 shadow-md transition-all border border-gray-200">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
-            <!-- iframe -->
             <iframe id="chat-iframe" class="w-full h-full border-0 flex-grow" src=""></iframe>
         </div>
     </div>
-    <!-- ▲▲▲ チャットモーダル（新規追加） ▲▲▲ -->
 
 
 <script>
@@ -384,6 +374,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     let scoreFacilityKey = ''; // '施設名' (milli_score.csvの1列目ヘッダー)
     let personaFacilityKey = ''; // '施設名' (milli_persona.csvの1列目ヘッダー)
     let adviceLines = [];
+
+    // ▼▼▼ 追加：TSVのヘッダー列名とインデックスを保存する変数 ▼▼▼
+    let complainHeaders = [];
+    let facilityRequestColIndex = -1;
+    let ishikawaRequestColIndex = -1;
+    // ▲▲▲ 追加：TSVのヘッダー列名とインデックスを保存する変数 ▲▲▲
 
     const homeScreen = document.getElementById('home-screen');
     const analysisScreen = document.getElementById('analysis-screen');
@@ -406,19 +402,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const closeAiAdviceModalBtn = document.getElementById('close-ai-advice-modal-btn');
     const aiAdviceModalBody = document.getElementById('ai-advice-modal-body');
 
-    // ▼▼▼ 属性ランキングモーダル（新規追加） ▼▼▼
+    // 属性ランキングモーダル
     const attributeRankingModal = document.getElementById('attribute-ranking-modal');
     const closeAttributeRankingModalBtn = document.getElementById('close-attribute-ranking-modal-btn');
     const attributeRankingModalTitle = document.getElementById('attribute-ranking-modal-title');
     const attributeRankingModalList = document.getElementById('attribute-ranking-modal-list');
-    // ▲▲▲ 属性ランキングモーダル（新規追加） ▲▲▲
 
-    // ▼▼▼ チャットモーダル ▼▼▼
+    // チャットモーダル
     const chatModal = document.getElementById('chat-modal');
     const openChatModalBtn = document.getElementById('open-chat-modal-btn');
     const closeChatModalBtn = document.getElementById('close-chat-modal-btn');
     const chatIframe = document.getElementById('chat-iframe');
-    // ▲▲▲ チャットモーダル ▲▲▲
 
     const complainColIndex = {
         FACILITY: 1, TIMESTAMP: 2, SERVICE_SATISFACTION: 24, SERVICE_REASON: 25,
@@ -447,13 +441,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const header = headers[i];
                     let value = match[1] ? match[1].replace(/""/g, '"') : match[2];
                     if (value) {
-                        // ▼▼▼ 数値変換ロジックを修正（空文字をNaNにしない） ▼▼▼
                         const trimmedValue = value.trim();
                         const numValue = Number(trimmedValue);
                         obj[header] = !isNaN(numValue) && trimmedValue !== '' ? numValue : trimmedValue;
-                        // ▲▲▲ 数値変換ロジックを修正 ▲▲▲
                     } else {
-                        obj[header] = null; // 空のセルは null とする
+                        obj[header] = null;
                     }
                     i++;
                 }
@@ -492,14 +484,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     function parseTSVAsArrays(text) {
         const lines = text.trim().replace(/\r/g, '').split('\n');
         if (lines.length < 2) return [];
-        // ヘッダー行(1行目)をスキップ
+        // ▼▼▼ 変更：ヘッダー列を保存してから配列を返す ▼▼▼
+        complainHeaders = lines[0].split('\t').map(val => val.trim());
         return lines.slice(1).map(line => line.split('\t').map(val => val.trim()));
+        // ▲▲▲ 変更：ヘッダー列を保存してから配列を返す ▲▲▲
     }
 
     async function fetchAndParse(url, format = 'csv') {
-        // ▼▼▼ キャッシュ対策 ▼▼▼
         const response = await fetch(`${url}?_=${new Date().getTime()}`);
-        // ▲▲▲ キャッシュ対策 ▲▲▲
         if (!response.ok) throw new Error(`Failed to load ${url}: ${response.statusText}`);
         const text = await response.text();
         const cleanText = text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
@@ -535,35 +527,34 @@ document.addEventListener('DOMContentLoaded', async () => {
             const loadingStatus = loadingMessage.querySelector('p');
 
             loadingStatus.textContent = 'スコアデータを読み込み中...';
-            // パスは環境に合わせて調整してください
             const scoreResult = await fetchAndParse('./milli_score.csv');
             surveyData = scoreResult.data;
             scoreFacilityKey = scoreResult.key;
 
             loadingStatus.textContent = 'ペルソナデータを読み込み中...';
-            // パスは環境に合わせて調整してください
             const personaResult = await fetchAndParse('./milli_persona.csv');
             personaData = personaResult.data;
             personaFacilityKey = personaResult.key;
 
             loadingStatus.textContent = '口コミデータを読み込み中...';
-            // パスは環境に合わせて調整してください
             complainData = await fetchAndParse('./milli_complain.tsv', 'tsv-array');
             
+            // ▼▼▼ 追加：動的に列インデックスを検索 ▼▼▼
+            // キーワードから列を推測する
+            facilityRequestColIndex = complainHeaders.findIndex(h => h.includes('当施設') && h.includes('飲食') && h.includes('アクティビティ'));
+            ishikawaRequestColIndex = complainHeaders.findIndex(h => h.includes('石川県') && h.includes('飲食') && h.includes('アクティビティ'));
+            // ▲▲▲ 追加：動的に列インデックスを検索 ▲▲▲
+
             loadingStatus.textContent = 'AIアドバイスを準備中...';
-            // パスは環境に合わせて調整してください
             const aiAdviceResult = await fetchAndParse('./milli_ai_advice.tsv', 'ai-advice-tsv');
             aiAdviceData = aiAdviceResult.data;
 
             loadingStatus.textContent = '追加データを読み込み中...';
-            // パスは環境に合わせて調整してください
             const adviceResponse = await fetch('../tifo_advice.txt').catch(e => null);
             
             if (surveyData.length === 0) throw new Error("No valid data rows found in milli_score.csv.");
             
-            // 施設キーが有効なデータのみをフィルタリング
             surveyData = surveyData.filter(row => row && row[scoreFacilityKey] && String(row[scoreFacilityKey]).trim() !== '');
-            // 全回答数でソート
             surveyData.sort((a, b) => (Number(b['全回答数']) || 0) - (Number(a['全回答数']) || 0));
             
             if (adviceResponse && adviceResponse.ok) {
@@ -571,7 +562,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 adviceLines = adviceText.trim().split(/\r?\n/).filter(line => line.trim() !== '');
             }
 
-            // セレクトボックスに施設名を追加
             surveyData.forEach(data => {
                 const option = document.createElement('option');
                 option.value = data[scoreFacilityKey];
@@ -581,23 +571,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             loadingMessage.classList.add('hidden');
             mainContent.classList.remove('hidden');
-            handleRouteChange(); // URLハッシュに基づいて初期表示
+            handleRouteChange(); 
         } catch (error) {
             console.error("Full error object:", error);
             loadingMessage.innerHTML = `<p class="text-red-500 font-bold">エラー: データファイルの読み込みに失敗しました。</p><p class="text-sm mt-2">${error.message}</p>`;
         }
     }
 
-    // --- 画面遷移イベント ---
     analyzeButton.addEventListener('click', () => { location.hash = encodeURIComponent(facilitySelect.value); });
     backButton.addEventListener('click', () => { location.hash = ''; });
     backButtonBottom.addEventListener('click', () => { location.hash = ''; });
     window.addEventListener('hashchange', handleRouteChange);
     
-    // --- 免責事項モーダルイベント ---
     const openDisclaimerModal = async () => {
          try {
-            // パスは環境に合わせて調整してください
             const response = await fetch('../credit.txt');
             if (!response.ok) throw new Error('File not found');
             const text = await response.text();
@@ -616,7 +603,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     closeDisclaimerIconBtn.addEventListener('click', closeDisclaimerModal);
     disclaimerModal.addEventListener('click', (e) => { if(e.target === disclaimerModal) closeDisclaimerModal(); });
 
-    // --- AIアドバイスモーダルイベント ---
     openAiAdviceBtn.addEventListener('click', () => {
         const facilityName = facilitySelect.value;
         const adviceInfo = aiAdviceData.find(d => d['施設名'] === facilityName);
@@ -637,16 +623,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // ▼▼▼ 属性ランキングモーダルイベント（新規追加） ▼▼▼
     const openAttributeRankingModal = (categoryTitle, displayName, colNamesCSV) => {
         attributeRankingModalTitle.textContent = `${displayName}（${categoryTitle}）が多い施設 TOP30`;
         
-        // カンマを含む列名があるため、パイプ(|)で分割するように変更
         const colNames = colNamesCSV.split('|');
 
         const rankingData = surveyData.map(facilityData => {
             let totalPercentage = 0;
-            // 該当する列の割合を合計
             colNames.forEach(col => {
                 totalPercentage += (Number(facilityData[col]) || 0);
             });
@@ -655,11 +638,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 percentage: totalPercentage
             };
         })
-        .filter(item => item.percentage > 0) // 割合が0より大きい施設のみ
-        .sort((a, b) => b.percentage - a.percentage) // 割合で降順ソート
-        .slice(0, 30); // 上位30件
+        .filter(item => item.percentage > 0) 
+        .sort((a, b) => b.percentage - a.percentage) 
+        .slice(0, 30); 
 
-        // リストをクリア
         attributeRankingModalList.innerHTML = '';
 
         if (rankingData.length === 0) {
@@ -668,9 +650,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             rankingData.forEach((facility, index) => {
                 const li = document.createElement('li');
                 li.className = 'flex items-center p-2';
-                // ランクバッジのクラスを動的に設定
                 let rankClass = `rank-${index + 1}`;
-                if (index >= 5) rankClass = 'rank-default'; // 6位以下はデフォルト色
+                if (index >= 5) rankClass = 'rank-default'; 
 
                 li.innerHTML = `
                     <span class="rank-badge ${rankClass} !w-8 !h-8 text-sm">${index + 1}</span>
@@ -693,47 +674,35 @@ document.addEventListener('DOMContentLoaded', async () => {
             closeAttributeRankingModal();
         }
     });
-    // ▲▲▲ 属性ランキングモーダルイベント（新規追加） ▲▲▲
 
-    // ▼▼▼ チャットモーダルイベント追加 ▼▼▼
     openChatModalBtn.addEventListener('click', () => {
         const facilityName = facilitySelect.value;
         if (facilityName) {
-            // URLエンコードしてiframeのsrcに設定
-            chatIframe.src = `https://beeb-c4n.github.io/tifo/ishikawa/chat/#${encodeURIComponent(facilityName)}`;
+            chatIframe.src = `https://codefornoto.github.io/TIFO/ishikawa/chat/#${encodeURIComponent(facilityName)}`;
             chatModal.classList.remove('hidden');
         }
     });
 
     const closeChatModal = () => {
         chatModal.classList.add('hidden');
-        // モーダルを閉じたときに中身をリセットしたい場合は以下を有効化
-        // chatIframe.src = '';
     };
 
     closeChatModalBtn.addEventListener('click', closeChatModal);
     chatModal.addEventListener('click', (e) => {
-        // モーダルの背景（外側）をクリックしたときにも閉じる
         if (e.target === chatModal) {
             closeChatModal();
         }
     });
-    // ▲▲▲ チャットモーダルイベント追加 ▲▲▲
-
-
-    // --- 分析ロジック ---
 
     function getRank(value, dataKey) {
         if (value === null || value === undefined) return { rank: 'N/A', total: surveyData.length };
-        // ▼▼▼ 数値以外（nullなど）を除外してソート ▼▼▼
         const sortedValues = surveyData
             .map(d => d[dataKey])
             .filter(v => v !== null && v !== undefined && !isNaN(Number(v)))
             .map(v => Number(v))
             .sort((a, b) => b - a);
-        // ▲▲▲ 数値以外（nullなど）を除外してソート ▲▲▲
         const rank = sortedValues.indexOf(Number(value)) + 1;
-        return { rank: rank > 0 ? rank : 'N/A', total: sortedValues.length }; // 存在しない場合は N/A
+        return { rank: rank > 0 ? rank : 'N/A', total: sortedValues.length }; 
     }
 
     function updateSatisfactionCard(idPrefix, score, dataKey) {
@@ -751,7 +720,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             .slice(0, n);
     }
 
-    // ▼▼▼ renderRankingList を修正 ▼▼▼
     function renderRankingList(elementId, topData, categoryInfo) {
         const listElement = document.getElementById(elementId);
         listElement.innerHTML = '';
@@ -763,18 +731,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         topData.forEach(([displayName, value], index) => {
             const percentage = (Number(value) * 100).toFixed(1);
             const li = document.createElement('li');
-            li.className = 'flex items-center p-2 cursor-pointer hover:bg-gray-100 transition-colors rounded-lg'; // クリック可能なスタイル
+            li.className = 'flex items-center p-2 cursor-pointer hover:bg-gray-100 transition-colors rounded-lg'; 
             li.innerHTML = `<span class="rank-badge rank-${index + 1}">${index + 1}</span><span class="ml-3 flex-1">${displayName}</span><span class="font-bold">${percentage}%</span>`;
             
-            // 表示名から surveyData の列名(複数可)を取得
             const colNames = Object.keys(categoryInfo.map).filter(key => categoryInfo.map[key] === displayName);
             
-            // data属性に行名(パイプ区切り)とカテゴリタイトル、表示名を設定 (カンマを含む列名に対応するため)
             li.setAttribute('data-col-names', colNames.join('|'));
             li.setAttribute('data-category-title', categoryInfo.title);
             li.setAttribute('data-display-name', displayName);
             
-            // クリックイベントリスナーを追加
             li.addEventListener('click', () => {
                 openAttributeRankingModal(
                     li.getAttribute('data-category-title'),
@@ -786,7 +751,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             listElement.appendChild(li);
         });
     }
-    // ▲▲▲ renderRankingList を修正 ▲▲▲
     
     function displayPersonaAnalysis(scoreData, facilityName) {
         const personaSection = document.getElementById('persona-section');
@@ -838,7 +802,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             card.querySelector('.persona-age-icon').textContent = ageIcons[persona.age] || ageIcons.default;
             
             const certaintyPercent = totalAnswers > 0 ? (Number(persona.count) / totalAnswers) * 100 : 0;
-            const barWidthPercent = Math.min(100, (certaintyPercent / 25) * 100); // 25%を最大としてバー表示（調整可能）
+            const barWidthPercent = Math.min(100, (certaintyPercent / 25) * 100); 
             
             const progressBar = card.querySelector('.progress-bar');
             progressBar.style.width = `${barWidthPercent}%`;
@@ -852,6 +816,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function displayCustomerFeedback(facilityName) {
+        // ▼▼▼ 追加：追加した２つのタブの情報を設定 ▼▼▼
         const satisfactionInfo = {
             'とても満足': { icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'green', label: 'とても満足' },
             '満足': { icon: 'M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'blue', label: '満足' },
@@ -861,7 +826,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             '感じた': { icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', color: 'orange', label: '不便を感じた' },
             'request': { icon: 'M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z', color: 'cyan', label: 'リクエスト' },
             'nps': { icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z', color: 'purple', label: 'NPSの理由' },
+            'facility-request': { icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', color: 'blue', label: '当施設への要望' },
+            'ishikawa-request': { icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'orange', label: '石川県への要望' },
         };
+        // ▲▲▲ 追加：追加した２つのタブの情報を設定 ▲▲▲
         const colorClasses = {
             green: { icon: 'text-green-500', label: 'text-green-800', bg: 'bg-green-100' },
             blue: { icon: 'text-blue-500', label: 'text-blue-800', bg: 'bg-blue-100' },
@@ -875,9 +843,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const filteredData = complainData
             .filter(row => row && row[complainColIndex.FACILITY] === facilityName)
-            .sort((a, b) => new Date(b[complainColIndex.TIMESTAMP]) - new Date(a[complainColIndex.TIMESTAMP])); // 時系列でソート
+            .sort((a, b) => new Date(b[complainColIndex.TIMESTAMP]) - new Date(a[complainColIndex.TIMESTAMP])); 
 
-        const feedback = { service: [], facility: [], inconvenience: [], request: [], nps: [] };
+        // ▼▼▼ 変更：追加した2つの配列を含める ▼▼▼
+        const feedback = { service: [], facility: [], inconvenience: [], request: [], nps: [], facilityRequest: [], ishikawaRequest: [] };
+        // ▲▲▲ 変更：追加した2つの配列を含める ▲▲▲
         
         filteredData.forEach(row => {
             const commonData = {
@@ -902,10 +872,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (npsReason) {
                 feedback.nps.push({ ...commonData, text: npsReason, score: row[complainColIndex.NPS_SCORE] });
             }
+
+            // ▼▼▼ 追加：動的検索したインデックスから「特になし」を除外して配列にPush ▼▼▼
+            if (facilityRequestColIndex !== -1) {
+                const facReqText = row[facilityRequestColIndex];
+                if (facReqText && facReqText.trim() !== '' && !facReqText.includes('特になし')) {
+                    feedback.facilityRequest.push({ ...commonData, text: facReqText });
+                }
+            }
+
+            if (ishikawaRequestColIndex !== -1) {
+                const ishReqText = row[ishikawaRequestColIndex];
+                if (ishReqText && ishReqText.trim() !== '' && !ishReqText.includes('特になし')) {
+                    feedback.ishikawaRequest.push({ ...commonData, text: ishReqText });
+                }
+            }
+            // ▲▲▲ 追加：動的検索したインデックスから「特になし」を除外して配列にPush ▲▲▲
         });
 
         const createCommentCard = (comment, type) => {
-            let infoKey = type === 'request' ? 'request' : (type === 'nps' ? 'nps' : comment.satisfaction);
+            // ▼▼▼ 変更：追加した2つのタブタイプも認識させる ▼▼▼
+            let infoKey = comment.satisfaction;
+            if (type === 'request') infoKey = 'request';
+            else if (type === 'nps') infoKey = 'nps';
+            else if (type === 'facility-request') infoKey = 'facility-request';
+            else if (type === 'ishikawa-request') infoKey = 'ishikawa-request';
+            // ▲▲▲ 変更：追加した2つのタブタイプも認識させる ▲▲▲
+
             const info = satisfactionInfo[infoKey];
             if (!info || !comment.text) return '';
             
@@ -948,34 +941,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderComments('feedback-content-inconvenience', feedback.inconvenience, 'inconvenience');
         renderComments('feedback-content-request', feedback.request, 'request');
         renderComments('feedback-content-nps', feedback.nps, 'nps');
+        // ▼▼▼ 追加：追加した2つのタブのレンダー ▼▼▼
+        renderComments('feedback-content-facility-request', feedback.facilityRequest, 'facility-request');
+        renderComments('feedback-content-ishikawa-request', feedback.ishikawaRequest, 'ishikawa-request');
+        // ▲▲▲ 追加：追加した2つのタブのレンダー ▲▲▲
         
         // タブ切り替えロジック
         const tabs = document.querySelectorAll('.feedback-tab-button');
         const contents = document.querySelectorAll('.feedback-content');
         
         tabs.forEach(tab => {
-            // 既存のリスナーを削除（念のため）
             tab.replaceWith(tab.cloneNode(true));
         });
         
-        // 新しいタブ要素を取得してリスナーを再設定
         document.querySelectorAll('.feedback-tab-button').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 e.preventDefault();
-                // すべてのアクティブを解除
                 document.querySelectorAll('.feedback-tab-button').forEach(t => t.classList.remove('active'));
-                // クリックされたタブをアクティブに
                 tab.classList.add('active');
                 
-                // すべてのコンテンツを非表示
                 contents.forEach(c => c.classList.add('hidden'));
-                // 該当するコンテンツを表示
                 const contentId = `feedback-content-${tab.dataset.tab}`;
                 document.getElementById(contentId).classList.remove('hidden');
             });
         });
         
-        // 初期タブの設定（アクティブなタブがない場合）
         const activeTab = document.querySelector('.feedback-tab-button.active');
         if (!activeTab && tabs.length > 0) {
             document.querySelectorAll('.feedback-tab-button')[0].classList.add('active');
@@ -1013,9 +1003,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         displayPersonaAnalysis(data, facilityName);
         displayCustomerFeedback(facilityName);
         
-        // --- ▼▼▼ 属性ランキング（大幅修正） ▼▼▼ ---
-        
-        // surveyDataの列名: 表示名 のマッピング
         const categoryMaps = {
             'age-ranking': {
                 title: '年代',
@@ -1040,7 +1027,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     '名所、旧跡の観光': '名所・旧跡観光', 'テーマパーク（遊園地、動物園、博物館など）': 'テーマパーク', '買い物、アウトレット': '買い物',
                     'お祭りやイベントへの参加・見物': 'イベント', 'スポーツ観戦や芸能鑑賞（コンサート等）': '鑑賞', 'アウトドア（海水浴、釣り、登山など）': 'アウトドア',
                     'まちあるき、都市散策': 'まちあるき', '各種体験（手作り、果物狩りなど）': '体験',
-                    'スキー・スノボ、マリンスポーツ': 'スポーツ', 'その他スポーツ（ゴルフ、テニスなど）': 'スポーツ', // 'スポーツ'にマージ
+                    'スキー・スノボ、マリンスポーツ': 'スポーツ', 'その他スポーツ（ゴルフ、テニスなど）': 'スポーツ',
                     'ドライブ・ツーリング': 'ドライブ', '友人・親戚を尋ねる': '知人訪問', '出張など仕事関係': '仕事関係'
                 }
             },
@@ -1068,7 +1055,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         };
 
-        // 各カテゴリの集計オブジェクトを作成
         const ageGroups = Object.fromEntries(
             Object.entries(categoryMaps['age-ranking'].map).map(([col, display]) => [display, data[col]])
         );
@@ -1088,14 +1074,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             Object.entries(categoryMaps['prefecture-ranking'].map).map(([col, display]) => [display, data[col]])
         );
 
-        // '旅の目的' (purposeGroups) はマージ処理が必要
         const purposeGroups = {};
         Object.entries(categoryMaps['purpose-ranking'].map).forEach(([col, display]) => {
             const value = data[col] || 0;
             purposeGroups[display] = (purposeGroups[display] || 0) + Number(value);
         });
 
-        // ランキングリストを描画
         renderRankingList('age-ranking', getTopN(ageGroups, 5), categoryMaps['age-ranking']);
         renderRankingList('gender-ranking', getTopN(genderGroups, 5), categoryMaps['gender-ranking']);
         renderRankingList('stay-duration-ranking', getTopN(stayDurationGroups, 5), categoryMaps['stay-duration-ranking']);
@@ -1104,8 +1088,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderRankingList('income-ranking', getTopN(incomeGroups, 5), categoryMaps['income-ranking']);
         renderRankingList('prefecture-ranking', getTopN(prefectureGroups, 5), categoryMaps['prefecture-ranking']);
         
-        // --- ▲▲▲ 属性ランキング（大幅修正） ▲▲▲ ---
-
         // Tifoちゃんアドバイス
         const adviceContainer = document.getElementById('tifo-advice-text');
         let finalAdvice = '分析データを元に、さらなる改善点を探してみましょう！';
