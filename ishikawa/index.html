@@ -147,7 +147,8 @@
             overflow-y: auto;
         }
         .all-feedback-content {
-            height: min(52vh, 34rem);
+            height: 100%;
+            min-height: 0;
             overflow-y: auto;
         }
 
@@ -382,8 +383,7 @@
                 <div class="flex justify-between items-start gap-4 pb-4 border-b border-gray-200">
                     <div class="min-w-0">
                         <div class="flex items-center gap-2">
-                            <span class="w-7 h-7 rounded-md border-2 border-teal-500 text-teal-600 flex items-center justify-center text-sm font-bold">A</span>
-                            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">全件のお客様の声</h2>
+                            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">お客の声</h2>
                         </div>
                         <p id="all-feedback-modal-subtitle" class="text-sm text-gray-500 mt-2 truncate"></p>
                     </div>
@@ -415,7 +415,7 @@
                         <p id="all-feedback-error-detail" class="text-sm text-gray-500 mt-2"></p>
                     </div>
                 </div>
-                <div id="all-feedback-contents" class="hidden h-full">
+                <div id="all-feedback-contents" class="hidden h-full min-h-0">
                     <div id="all-feedback-content-service" class="all-feedback-content custom-scrollbar space-y-4"></div>
                     <div id="all-feedback-content-facility" class="all-feedback-content custom-scrollbar space-y-4 hidden"></div>
                     <div id="all-feedback-content-inconvenience" class="all-feedback-content custom-scrollbar space-y-4 hidden"></div>
@@ -816,6 +816,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         return '';
     };
 
+    const formatFeedbackDate = (value) => {
+        if (!value) return '日付不明';
+
+        let date = value instanceof Date ? value : null;
+
+        if (!date) {
+            const raw = String(value).trim();
+
+            // "YYYY/MM/DD HH:mm:ss", "YYYY-MM-DD", "YYYY.MM.DD" などに対応
+            const normalized = raw.replace(/\./g, '/').replace(/-/g, '/');
+            const match = normalized.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+            if (match) {
+                const y = match[1];
+                const m = String(match[2]).padStart(2, '0');
+                const d = String(match[3]).padStart(2, '0');
+                return `${y}/${m}/${d}`;
+            }
+
+            date = new Date(raw);
+        }
+
+        if (!date || isNaN(date.getTime())) return '日付不明';
+
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}/${m}/${d}`;
+    };
+
     const parseGvizDate = (cell) => {
         if (!cell) return new Date(0);
         const raw = cell.v;
@@ -933,7 +962,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const npsScoreBadge = isNps && comment.score !== undefined && comment.score !== ''
             ? `<span class="ml-auto text-xs font-bold px-2 py-1 rounded-full bg-purple-200 text-purple-800">評価: ${escapeHtml(comment.score)}点</span>`
             : '';
-        const meta = `${escapeHtml(comment.year || '不明')}年生まれ・${escapeHtml(comment.prefecture || '不明')}在住・${escapeHtml(comment.gender || '不明')}`;
+        const meta = `${escapeHtml(comment.year || '不明')}年生まれ・${escapeHtml(comment.prefecture || '不明')}在住・${escapeHtml(comment.gender || '不明')}・${escapeHtml(formatFeedbackDate(comment.timestampDate || comment.timestamp))}`;
 
         return `
             <div class="bg-white p-4 rounded-lg border border-gray-200">
@@ -978,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     const renderAllFeedbackModal = async (facilityName) => {
-        allFeedbackModalSubtitle.textContent = `${facilityName}｜日付の新しい順`;
+        allFeedbackModalSubtitle.textContent = `${facilityName}`;
         allFeedbackLoading.classList.remove('hidden');
         allFeedbackError.classList.add('hidden');
         allFeedbackContents.classList.add('hidden');
@@ -996,7 +1025,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const commonData = {
                     year: row.birthYear || '不明',
                     prefecture: row.prefecture || '不明',
-                    gender: row.gender || '不明'
+                    gender: row.gender || '不明',
+                    timestamp: row.timestamp || '',
+                    timestampDate: row.timestampDate || null
                 };
                 if (row.serviceReason) feedback.service.push({ ...commonData, text: row.serviceReason, satisfaction: row.serviceSatisfaction });
                 if (row.facilityReason) feedback.facility.push({ ...commonData, text: row.facilityReason, satisfaction: row.facilitySatisfaction });
@@ -1012,7 +1043,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderAllFeedbackComments('all-feedback-content-nps', feedback.nps, 'nps');
 
             const totalVoices = feedback.service.length + feedback.facility.length + feedback.inconvenience.length + feedback.request.length + feedback.nps.length;
-            allFeedbackModalSubtitle.textContent = `${facilityName}｜${filteredData.length}回答・自由記述 ${totalVoices}件｜日付の新しい順`;
+            allFeedbackModalSubtitle.textContent = `${facilityName}｜${filteredData.length}回答・自由記述 ${totalVoices}件`;
 
             allFeedbackLoading.classList.add('hidden');
             allFeedbackContents.classList.remove('hidden');
@@ -1228,7 +1259,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const commonData = {
                 year: row[complainColIndex.BIRTH_YEAR] || '不明',
                 prefecture: row[complainColIndex.PREFECTURE] || '不明',
-                gender: row[complainColIndex.GENDER] || '不明'
+                gender: row[complainColIndex.GENDER] || '不明',
+                timestamp: row[complainColIndex.TIMESTAMP] || ''
             };
 
             const serviceReason = row[complainColIndex.SERVICE_REASON];
@@ -1272,7 +1304,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 ${npsScoreBadge}
                             </div>
                             <p class="mt-2 text-gray-700 text-sm leading-relaxed">${comment.text}</p>
-                            <p class="mt-3 text-xs text-gray-500">${comment.year}年生まれ・${comment.prefecture}在住・${comment.gender}</p>
+                            <p class="mt-3 text-xs text-gray-500">${comment.year}年生まれ・${comment.prefecture}在住・${comment.gender}・${formatFeedbackDate(comment.timestamp)}</p>
                         </div>
                     </div>
                 </div>
