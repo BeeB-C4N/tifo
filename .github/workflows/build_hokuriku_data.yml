@@ -34,7 +34,9 @@ jobs:
         run: |
           set -euo pipefail
           echo "Workspace: ${GITHUB_WORKSPACE}"
-          python -u "${GITHUB_WORKSPACE}/scripts/build_hokuriku_data.py" \
+          python -u "${GITHUB_WORKSPACE}/scripts/build_hokuriku_data_v2.py" \
+            --repo "hokuriku-inbound-kanko/opendata" \
+            --branch "main" \
             --output-dir "${GITHUB_WORKSPACE}"
 
           required_files=(
