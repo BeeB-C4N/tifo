@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""北陸3県の統合アンケートCSVをTIFO向けの軽量集計CSVへ変換する。
+"""北陸3県の統合アンケートCSVをTIFO向けの軽量集計CSVへ変換する（v2）。
 
 標準ではGitHub上の output_merge/merged_survey_YYYY.csv を自動検出する。
 ローカル検証時は --input-dir で同形式のCSVを置いたディレクトリを指定できる。
@@ -79,6 +79,10 @@ CORE_COLUMNS = [
 DIMENSION_COLUMNS = [column for dimension in DIMENSIONS for column in dimension["columns"]]
 DAILY_COLUMNS = ["日付", "TIF", "回答場所", *CORE_COLUMNS, *DIMENSION_COLUMNS]
 SNAPSHOT_COLUMNS = ["TIF", "回答場所", *CORE_COLUMNS, *DIMENSION_COLUMNS]
+DATA_MANIFEST_FILE = "tifo_data_manifest.json"
+SNAPSHOT_FILE = "tifo_summary_all.csv"
+MONTHLY_FILE = "tifo_trend_monthly.csv"
+ROUTES_ALL_FILE = "tifo_routes_all.csv"
 
 REQUIRED_COLUMNS = {"対象県（富山/石川/福井）", "アンケート回答日", "回答場所"}
 INVALID_PLACE_NAMES = {"なし", "無し", "該当なし", "該当施設なし", "選択なし", "選択無し", "選択されていません", "特になし", "特に無し", "未定", "不明", "無回答", "未回答", "その他", "（回答場所不明）"}
@@ -425,16 +429,16 @@ def build(source_files: list[tuple[int, Path]], output_dir: Path, source_label: 
         raise RuntimeError("有効な回答を1件も集計できませんでした。")
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    for stale_pattern in ("daily_*.csv", "routes_*.csv"):
+    for stale_pattern in ("tifo_daily_*.csv", "tifo_routes_*.csv"):
         for stale in output_dir.glob(stale_pattern):
             stale.unlink()
 
-    write_wide(output_dir / "summary_all.csv", sorted(all_stats.items()), include_date=False)
-    write_monthly(output_dir / "trend_monthly.csv", monthly_stats)
-    write_routes(output_dir / "routes_all.csv", routes)
+    write_wide(output_dir / SNAPSHOT_FILE, sorted(all_stats.items()), include_date=False)
+    write_monthly(output_dir / MONTHLY_FILE, monthly_stats)
+    write_routes(output_dir / ROUTES_ALL_FILE, routes)
     for year, rows in sorted(daily_stats.items()):
-        write_wide(output_dir / f"daily_{year}.csv", sorted(rows.items()), include_date=True)
-        write_routes(output_dir / f"routes_{year}.csv", routes, year=year)
+        write_wide(output_dir / f"tifo_daily_{year}.csv", sorted(rows.items()), include_date=True)
+        write_routes(output_dir / f"tifo_routes_{year}.csv", routes, year=year)
 
     generated_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     years = sorted(daily_stats)
@@ -449,11 +453,11 @@ def build(source_files: list[tuple[int, Path]], output_dir: Path, source_label: 
         "invalid_date_count": invalid_dates,
         "available_years": years,
         "files": {
-            "snapshot": "summary_all.csv",
-            "monthly": "trend_monthly.csv",
-            "daily": {str(year): f"daily_{year}.csv" for year in years},
-            "routes_all": "routes_all.csv",
-            "routes": {str(year): f"routes_{year}.csv" for year in years},
+            "snapshot": SNAPSHOT_FILE,
+            "monthly": MONTHLY_FILE,
+            "daily": {str(year): f"tifo_daily_{year}.csv" for year in years},
+            "routes_all": ROUTES_ALL_FILE,
+            "routes": {str(year): f"tifo_routes_{year}.csv" for year in years},
         },
         "dimensions": DIMENSIONS,
         "notes": [
@@ -463,14 +467,14 @@ def build(source_files: list[tuple[int, Path]], output_dir: Path, source_label: 
             "回遊データは自由入力を含むため、全期間で同じ移動組合せが3件以上あるものだけを出力しています。",
         ],
     }
-    (output_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (output_dir / DATA_MANIFEST_FILE).write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return manifest
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input-dir", type=Path, help="merged_survey_YYYY.csv のあるローカルディレクトリ")
-    parser.add_argument("--output-dir", type=Path, default=Path("data/hokuriku"))
+    parser.add_argument("--output-dir", type=Path, default=Path("."), help="公開ファイルの出力先。TIFOではリポジトリ直下を指定する")
     parser.add_argument("--repo", default="hokuriku-inbound-kanko/opendata")
     parser.add_argument("--branch", default="main")
     parser.add_argument("--source-label", help="manifest.jsonに記録する出典表示（省略時は入力元から自動設定）")
