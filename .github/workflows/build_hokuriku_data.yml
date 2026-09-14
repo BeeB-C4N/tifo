@@ -2,8 +2,11 @@ name: Build Hokuriku TIFO data
 
 on:
   schedule:
-    # 毎週月曜日 03:00 JST（GitHub ActionsのcronはUTC指定）
+    # 毎週月曜日 03:00 JST
+    # GitHub ActionsのcronはUTC指定のため、日曜日18:00 UTC
     - cron: '0 18 * * 0'
+
+  # GitHubのActions画面から手動実行できるようにする
   workflow_dispatch:
 
 concurrency:
@@ -27,26 +30,62 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Run unit tests
-        run: python -m unittest discover -s tests -v
+      # tests/test_*.py がある場合だけテストを実行
+      # testsフォルダがない場合や、テストファイルがない場合はスキップ
+      - name: Run unit tests when present
+        shell: bash
+        run: |
+          if compgen -G "tests/test_*.py" > /dev/null; then
+            python -m unittest discover \
+              -s tests \
+              -p 'test_*.py' \
+              -v
+          else
+            echo "No test_*.py files found. Skipping unit tests."
+          fi
 
+      # 北陸3県の元データから軽量CSVを生成
+      # build_hokuriku_data.pyはindex.htmlと同じ階層に配置
       - name: Build lightweight CSV files
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python scripts/build_hokuriku_data.py --output-dir data/hokuriku
+        run: |
+          python build_hokuriku_data.py \
+            --output-dir .
 
+      # 生成されたファイルを確認
       - name: Show output sizes
-        run: du -h data/hokuriku/* | sort -h
+        shell: bash
+        run: |
+          ls -lh \
+            tifo_data_manifest.json \
+            tifo_summary_all.csv \
+            tifo_trend_monthly.csv \
+            tifo_daily_*.csv \
+            tifo_routes_*.csv
 
+      # 生成データに変更がある場合だけ自動コミット
       - name: Commit generated data when changed
+        shell: bash
         run: |
           set -euo pipefail
+
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/hokuriku
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add \
+            tifo_data_manifest.json \
+            tifo_summary_all.csv \
+            tifo_trend_monthly.csv \
+            tifo_daily_*.csv \
+            tifo_routes_*.csv
+
           if git diff --cached --quiet; then
             echo "No data changes."
           else
-            git commit -m "data: rebuild Hokuriku TIFO aggregates ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))"
+            git commit -m \
+              "data: rebuild Hokuriku TIFO aggregates ($(date -u +'%Y-%m-%dT%H:%M:%SZ'))"
+
             git push
           fi
