@@ -6,7 +6,7 @@ on:
     # GitHub ActionsのcronはUTC指定のため、日曜日18:00 UTC
     - cron: '0 18 * * 0'
 
-  # GitHubのActions画面から手動実行できるようにする
+  # Actions画面から手動実行
   workflow_dispatch:
 
 concurrency:
@@ -30,8 +30,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      # tests/test_*.py がある場合だけテストを実行
-      # testsフォルダがない場合や、テストファイルがない場合はスキップ
+      # テストファイルがある場合だけ実行
       - name: Run unit tests when present
         shell: bash
         run: |
@@ -44,16 +43,14 @@ jobs:
             echo "No test_*.py files found. Skipping unit tests."
           fi
 
-      # 北陸3県の元データから軽量CSVを生成
-      # build_hokuriku_data.pyはindex.htmlと同じ階層に配置
+      # scriptsフォルダ内のPythonを実行
       - name: Build lightweight CSV files
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python build_hokuriku_data.py \
+          python scripts/build_hokuriku_data.py \
             --output-dir .
 
-      # 生成されたファイルを確認
       - name: Show output sizes
         shell: bash
         run: |
@@ -64,7 +61,6 @@ jobs:
             tifo_daily_*.csv \
             tifo_routes_*.csv
 
-      # 生成データに変更がある場合だけ自動コミット
       - name: Commit generated data when changed
         shell: bash
         run: |
