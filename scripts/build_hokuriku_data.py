@@ -22,6 +22,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
+DATA_MANIFEST_FILE = "tifo_data_manifest.json"
+SNAPSHOT_FILE = "tifo_summary_all.csv"
+MONTHLY_FILE = "tifo_trend_monthly.csv"
+ROUTES_ALL_FILE = "tifo_routes_all.csv"
+
 
 PREFECTURES = [
     "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
