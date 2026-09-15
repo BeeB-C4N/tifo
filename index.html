@@ -1,576 +1,636 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TIFO - 観光猫型AIアドバイザリー</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --tifo-bg: #F7FAFC;
-            --tifo-text: #2D3748;
-            --tifo-primary: #4FD1C5;
-            --tifo-primary-dark: #38B2AC;
-            --tifo-card-border: #E2E8F0;
-            --tifo-card-bg: #FFFFFF;
-            /* 県のカラーコード */
-            --color-toyama-bg: #4db56a;
-            --color-ishikawa-bg: #008cbe;
-            --color-fukui-bg: #00006b;
-            --color-pref-text: #ffffff;
-        }
-        body {
-            font-family: 'Noto Sans JP', sans-serif;
-            background-color: var(--tifo-bg);
-            color: var(--tifo-text);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        main#app-container {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .tifo-card {
-            background-color: var(--tifo-card-bg);
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border: 1px solid var(--tifo-card-border);
-        }
-        .tifo-button {
-            background-color: var(--tifo-primary);
-            color: white;
-            font-weight: bold;
-            padding: 0.75rem 1.5rem;
-            border-radius: 9999px;
-            border-bottom: 4px solid var(--tifo-primary-dark);
-            transition: all 0.2s ease;
-        }
-        .tifo-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px -3px rgba(79, 209, 197, 0.4);
-        }
-        .tifo-button:active {
-            transform: translateY(2px);
-            border-bottom-width: 2px;
-        }
-        /* つぶやきボタンのスタイル */
-        .tifo-button-secondary {
-            background-color: #fff;
-            color: var(--tifo-primary);
-            border: 2px solid var(--tifo-primary);
-            font-weight: bold;
-            padding: 0.75rem 1.5rem;
-            border-radius: 9999px;
-            transition: all 0.2s ease;
-        }
-        .tifo-button-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px -3px rgba(79, 209, 197, 0.2);
-        }
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#159b8c">
+  <meta name="description" content="富山・石川・福井の観光アンケートを、期間を指定して比較・分析できる北陸3県版TIFOです。">
+  <title>TIFO｜北陸3県観光データ分析</title>
+  <link rel="icon" href="./favicon.ico">
+  <link rel="apple-touch-icon" href="./tifo.png">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- アプリ固有のCSSとJavaScriptは、すべてこのHTML内に内包しています。 -->
+  <style>
+:root {
+  --mint: #4FD1C5; --mint-dark: #38B2AC; --mint-soft: #E6FFFA; --ink: #2D3748;
+  --muted: #718096; --line: #E2E8F0; --paper: #FFFFFF; --canvas: #F7FAFC;
+  --toyama: #45a666; --ishikawa: #178ab6; --fukui: #3b467e; --danger: #b42318;
+  --shadow: 0 10px 15px -3px rgba(0,0,0,.05), 0 4px 6px -2px rgba(0,0,0,.05);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--canvas); color: var(--ink); font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", system-ui, sans-serif; line-height: 1.65; }
+button, input, select { font: inherit; } button, select { cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid rgba(21,155,140,.25); outline-offset: 2px; }
+.skip-link { position: fixed; left: 1rem; top: -5rem; z-index: 100; background: var(--ink); color: #fff; padding: .65rem 1rem; border-radius: .5rem; }
+.skip-link:focus { top: 1rem; }
+.site-header { position: relative; z-index: 20; background: var(--canvas); border-bottom: 0; }
+.header-inner { width: min(1024px, calc(100% - 32px)); min-height: 98px; margin: auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.brand { display: inline-flex; align-items: center; gap: .7rem; color: inherit; text-decoration: none; }
+.brand-logo { display: block; width: 64px; height: 64px; flex: 0 0 auto; }
+.brand-cat { width: 58px; height: 58px; object-fit: contain; }
+.brand span { display: grid; line-height: 1.15; } .brand strong { font-size: 1.22rem; letter-spacing: .04em; }
+.brand small { margin-top: .3rem; color: var(--muted); font-size: .72rem; }
+.text-button { display: inline-flex; align-items: center; gap: .45rem; border: 1px solid var(--line); background: #fff; color: var(--muted); padding: .65rem 1rem; border-radius: 9999px; font-weight: 700; } .text-button:hover { color: var(--mint-dark); border-color: var(--mint); background: var(--mint-soft); }
+.page-shell { width: min(1024px, calc(100% - 32px)); margin: auto; padding: 8px 0 80px; }
+.hero { display: flex; justify-content: space-between; align-items: center; gap: 3rem; padding: 32px; margin-bottom: 24px; background: #fff; border: 1px solid var(--line); border-radius: 1.5rem; box-shadow: var(--shadow); }
+.eyebrow, .section-kicker { margin: 0 0 .45rem; color: var(--mint-dark); font-size: .72rem; font-weight: 800; letter-spacing: .16em; }
+.hero h1 { margin: 0; font-size: clamp(1.9rem, 4vw, 3.1rem); line-height: 1.25; letter-spacing: -.035em; }
+.hero-copy { max-width: 680px; margin: 1.2rem 0 0; color: var(--muted); font-size: 1.02rem; }
+.hero-meta { min-width: 250px; display: grid; gap: .55rem; color: var(--muted); font-size: .78rem; text-align: left; padding: 16px 18px; background: var(--mint-soft); border-radius: 1rem; }
+.hero-meta span { display: flex; align-items: center; gap: .45rem; }
+.filter-panel, .panel-card { background: var(--paper); border: 1px solid var(--line); border-radius: 1.5rem; box-shadow: var(--shadow); }
+.filter-panel { padding: 24px; }
+.filter-heading, .section-heading, .split-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.5rem; }
+.filter-heading h2, .section-heading h2 { margin: 0; font-size: 1.45rem; }
+.section-heading { margin: 0 2px 18px; } .section-heading > p, .section-heading > label { margin: 0; color: var(--muted); font-size: .86rem; }
+.loading-state { display: inline-flex; align-items: center; gap: .55rem; color: var(--muted); font-size: .8rem; visibility: hidden; }
+.loading-state.is-visible { visibility: visible; }
+.spinner { width: 15px; height: 15px; border: 2px solid var(--line); border-top-color: var(--mint); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.preset-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.preset-button { border: 1px solid var(--line); background: #fff; color: var(--muted); padding: .55rem 1rem; border-radius: 999px; font-weight: 700; font-size: .84rem; }
+.preset-button:hover, .preset-button.is-active { border-color: var(--mint); background: var(--mint-soft); color: var(--mint-dark); }
+.date-controls { display: grid; grid-template-columns: 1fr auto 1fr auto minmax(190px,.9fr); align-items: end; gap: 12px; margin-top: 18px; }
+label { display: grid; gap: .4rem; color: var(--muted); font-size: .75rem; font-weight: 700; }
+input, select { min-width: 0; width: 100%; min-height: 44px; border: 1px solid #cadbd7; border-radius: 11px; background: #fff; color: var(--ink); padding: .58rem .72rem; }
+input:disabled, select:disabled { background: #f1f5f4; color: #94a39f; cursor: not-allowed; }
+.date-separator { padding-bottom: .65rem; color: #9baba8; }
+.primary-button, .secondary-button { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; min-height: 44px; border-radius: 9999px; padding: .65rem 1.15rem; font-weight: 800; transition: transform .2s ease, box-shadow .2s ease; }
+.primary-button { border: 1px solid var(--mint); border-bottom: 4px solid var(--mint-dark); background: var(--mint); color: #fff; } .primary-button:hover { transform: translateY(-2px); box-shadow: 0 6px 12px -3px rgba(79,209,197,.4); }
+.primary-button:disabled { opacity: .45; cursor: not-allowed; }
+.secondary-button { border: 1px solid var(--mint); border-bottom: 3px solid var(--mint-dark); background: #fff; color: var(--mint-dark); }
+.filter-message, .inline-note { margin: 14px 0 0; color: var(--muted); font-size: .78rem; }
+.tab-list { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 6px; margin: 26px 0 32px; padding: 8px; overflow-x: auto; border: 1px solid var(--line); border-radius: 1.5rem; background: #fff; box-shadow: var(--shadow); scrollbar-width: thin; }
+.tab-button { display: flex; align-items: center; justify-content: center; gap: .45rem; min-width: 130px; border: 0; border-bottom: 3px solid transparent; border-radius: 1rem; background: transparent; color: var(--muted); padding: .8rem .65rem; font-weight: 800; }
+.tab-button:hover, .tab-button.is-active { color: var(--mint-dark); border-bottom-color: var(--mint); background: var(--mint-soft); }
+.tab-panel { animation: rise .22s ease-out; } @keyframes rise { from { opacity: 0; transform: translateY(5px); } }
+.prefecture-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 20px; }
+.prefecture-card { position: relative; overflow: hidden; background: #fff; border: 1px solid var(--line); border-radius: 1.5rem; padding: 22px; box-shadow: var(--shadow); }
+.prefecture-card::before { content: ""; position: absolute; inset: 0 0 auto; height: 5px; background: var(--pref-color); }
+.prefecture-card h3 { display: flex; align-items: center; justify-content: space-between; margin: 0 0 18px; font-size: 1.2rem; }
+.prefecture-card h3 > b { display: inline-flex; align-items: center; gap: .45rem; }
+.prefecture-card h3 span { color: var(--muted); font-size: .73rem; font-weight: 600; }
+.metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .metric-block { min-width: 0; padding: 12px; border-radius: 1rem; background: var(--canvas); }
+.metric-label { display: flex; align-items: center; gap: .35rem; }
+.metric-block small { display: block; color: var(--muted); font-size: .68rem; } .metric-block strong { display: block; margin-top: .15rem; font-size: clamp(1.1rem,2vw,1.55rem); line-height: 1.2; }
+.metric-block strong span { margin-left: .15rem; color: var(--muted); font-size: .67rem; }
+.panel-card { padding: 24px; margin-bottom: 20px; } .card-heading h3 { margin: 0; font-size: 1.08rem; } .card-heading p { margin: .25rem 0 0; color: var(--muted); font-size: .78rem; }
+.split-heading label { min-width: 220px; }
+.comparison-table { margin-top: 22px; overflow-x: auto; }
+.compare-row { display: grid; grid-template-columns: minmax(170px,1.2fr) repeat(3,minmax(150px,1fr)); align-items: center; gap: 16px; min-width: 720px; padding: .72rem 0; border-top: 1px solid #edf2f1; }
+.compare-row:first-child { border-top: 0; } .compare-label { font-size: .8rem; font-weight: 700; }
+.bar-cell { display: grid; grid-template-columns: 1fr 48px; align-items: center; gap: 8px; } .bar-track { height: 8px; overflow: hidden; background: #edf3f2; border-radius: 999px; }
+.bar-fill { height: 100%; width: var(--width); background: var(--pref-color); border-radius: inherit; } .bar-value { color: var(--muted); font-size: .72rem; text-align: right; }
+.control-grid { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 12px; align-items: end; } .is-hidden { display: none !important; }
+.table-scroll { overflow-x: auto; margin-top: 20px; } .data-table { width: 100%; min-width: 680px; border-collapse: collapse; }
+.data-table th { color: var(--muted); padding: .7rem .8rem; border-bottom: 1px solid var(--line); font-size: .7rem; text-align: left; white-space: nowrap; }
+.data-table td { padding: .86rem .8rem; border-bottom: 1px solid #edf2f1; font-size: .8rem; }
+.rank-number { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: #A9A9A9; color: #fff; font-weight: 800; }
+.rank-number.rank-1 { background: #FFD700; color: #744210; } .rank-number.rank-2 { background: #C0C0C0; color: #4A5568; } .rank-number.rank-3 { background: #CD7F32; }
+.pref-pill { display: inline-flex; border: 1px solid var(--pref-color); background: #fff; color: var(--pref-color); border-radius: 999px; padding: .18rem .55rem; font-size: .68rem; font-weight: 800; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 10px; } .legend-item { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: .72rem; }
+.legend-swatch { width: 18px; height: 3px; border-radius: 4px; background: var(--pref-color); }
+.trend-chart { min-height: 330px; overflow-x: auto; } .trend-chart svg { display: block; width: 100%; min-width: 700px; height: 330px; }
+.chart-grid { stroke: #e9efed; stroke-width: 1; } .chart-label { fill: #71837f; font-size: 10px; }
+.chart-line { fill: none; stroke: var(--pref-color); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; } .chart-point { fill: #fff; stroke: var(--pref-color); stroke-width: 2; }
+.trend-table { margin-top: 10px; color: var(--muted); font-size: .73rem; text-align: center; }
+.route-control-grid { grid-template-columns: 1.3fr 1fr 1.3fr auto; }
+.route-result { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin: 20px 0; }
+.route-stop { position: relative; background: #fff; border: 1px solid var(--line); border-top: 5px solid var(--pref-color); border-radius: 1.5rem; padding: 20px; box-shadow: var(--shadow); }
+.route-stop:not(:last-child)::after { content: "→"; position: absolute; right: -23px; top: 50%; z-index: 2; width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: #fff; color: var(--mint-dark); font-weight: 800; }
+.route-day { color: var(--pref-color); font-size: .7rem; font-weight: 800; letter-spacing: .12em; } .route-stop h3 { margin: .2rem 0 .8rem; font-size: 1.2rem; }
+.route-stop label { margin-top: .8rem; } .route-score { display: flex; align-items: baseline; gap: .35rem; margin-top: 1rem; } .route-score strong { font-size: 1.65rem; }
+.route-score span, .route-reason { color: var(--muted); font-size: .72rem; }
+.movement-card .secondary-button { margin-top: 15px; } .movement-list { display: grid; gap: 8px; margin-top: 14px; }
+.movement-row { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr) 70px; align-items: center; gap: 10px; padding: .72rem .8rem; border: 1px solid #edf2f1; border-radius: 11px; font-size: .78rem; }
+.movement-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .movement-row b { color: var(--mint-dark); text-align: right; }
+.facility-picker { display: grid; grid-template-columns: .7fr 1.2fr 2fr; gap: 12px; } .facility-profile { margin-top: 18px; }
+.facility-hero { display: grid; grid-template-columns: 1.3fr repeat(3,.7fr); gap: 14px; align-items: stretch; margin-bottom: 18px; }
+.facility-title, .facility-metric, .attribute-card { background: #fff; border: 1px solid var(--line); border-radius: 1.5rem; padding: 18px; box-shadow: var(--shadow); }
+.facility-title { border-left: 5px solid var(--pref-color); } .facility-title h3 { margin: .3rem 0 .4rem; font-size: 1.35rem; } .facility-title p { margin: 0; color: var(--muted); font-size: .76rem; }
+.facility-metric small { color: var(--muted); font-size: .67rem; } .facility-metric strong { display: block; margin-top: .4rem; font-size: 1.55rem; }
+.attribute-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; } .attribute-card h4 { margin: 0 0 13px; font-size: .9rem; }
+.attribute-row { display: grid; grid-template-columns: minmax(100px,1fr) 1fr 50px; align-items: center; gap: 8px; margin-top: 8px; color: var(--muted); font-size: .72rem; }
+.attribute-row .bar-fill { background: var(--mint); } .lift-up { color: var(--mint-dark); font-weight: 800; }
+.empty-state { display: grid; place-items: center; min-height: 180px; border: 1px dashed #bfcecb; border-radius: 18px; color: var(--muted); }
+.error-panel { margin-top: 20px; border: 1px solid #f2c9c5; background: #fff5f4; color: var(--danger); border-radius: 14px; padding: 16px; }
+.site-footer { width: min(1180px,calc(100% - 32px)); margin: auto; padding: 28px 0 46px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 1rem; color: var(--muted); font-size: .7rem; }
+dialog { width: min(650px,calc(100% - 28px)); border: 0; border-radius: 1.5rem; padding: 0; color: var(--ink); box-shadow: 0 24px 80px rgba(45,55,72,.25); }
+dialog::backdrop { background: rgba(10,32,29,.54); backdrop-filter: blur(3px); } .dialog-heading { display: flex; justify-content: space-between; align-items: center; padding: 20px 22px 14px; border-bottom: 1px solid var(--line); }
+.dialog-heading h2 { margin: 0; font-size: 1.15rem; } .dialog-heading button { border: 0; background: transparent; color: var(--muted); font-size: 1.5rem; }
+.dialog-content { padding: 20px 22px 25px; color: var(--muted); font-size: .82rem; } .dialog-content dl { display: grid; grid-template-columns: 120px 1fr; gap: 8px 14px; }
+.dialog-content dt { font-weight: 800; color: var(--ink); } .dialog-content dd { margin: 0; } .noscript { margin: 1rem; padding: 1rem; background: #fff4e5; }
+.tifo-icon { width: 1.35rem; height: 1.35rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
+.tifo-icon.is-small { width: 1rem; height: 1rem; } .tifo-icon.is-large { width: 1.6rem; height: 1.6rem; }
+.heading-title { display: flex; align-items: center; gap: .7rem; }
+.heading-icon { display: inline-grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: var(--mint-soft); color: var(--mint-dark); flex: 0 0 auto; }
+.svg-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.dialog-close { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; }
+.dialog-close:hover { background: var(--mint-soft); color: var(--mint-dark); }
+@media (max-width: 900px) {
+  .hero { display: block; } .hero-meta { margin-top: 1.5rem; text-align: left; }
+  .date-controls { grid-template-columns: 1fr auto 1fr; } .date-controls .primary-button, .sample-control { grid-column: span 3; }
+  .prefecture-grid { grid-template-columns: 1fr; } .control-grid { grid-template-columns: repeat(2,1fr); } .route-control-grid { grid-template-columns: repeat(2,1fr); }
+  .route-result { grid-template-columns: 1fr; } .route-stop:not(:last-child)::after { content: "↓"; left: 50%; right: auto; top: auto; bottom: -24px; transform: translateX(-50%); }
+  .facility-hero { grid-template-columns: repeat(3,1fr); } .facility-title { grid-column: span 3; }
+}
+@media (max-width: 620px) {
+  .page-shell { width: min(100% - 22px,1180px); padding-top: 25px; } .header-inner { width: min(100% - 22px,1180px); min-height: 66px; }
+  .brand-logo { width: 50px; height: 50px; } .brand-cat { display: none; } .brand strong { font-size: 1rem; } .brand small { display: none; } .text-button { padding: .55rem .75rem; font-size: .75rem; } .hero { padding: 22px 18px; } .hero h1 { font-size: 2.15rem; }
+  .filter-panel, .panel-card { padding: 17px; border-radius: 17px; } .filter-heading, .section-heading, .split-heading { display: block; }
+  .split-heading label, .section-heading > label { margin-top: 12px; min-width: 0; } .loading-state { margin-top: 8px; }
+  .date-controls { grid-template-columns: 1fr; } .date-separator { display: none; } .date-controls .primary-button, .sample-control { grid-column: auto; }
+  .tab-list { margin-top: 20px; } .tab-button { padding: .72rem .78rem; font-size: .82rem; }
+  .control-grid, .route-control-grid, .facility-picker, .attribute-grid { grid-template-columns: 1fr; }
+  .compare-row { grid-template-columns: minmax(140px,1fr) repeat(3,minmax(130px,1fr)); }
+  .facility-hero { grid-template-columns: 1fr 1fr; } .facility-title { grid-column: span 2; }
+  .movement-row { grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); } .movement-row b { grid-column: span 3; text-align: left; }
+  .site-footer { display: block; }
+}
+  </style>
+  <script>
+(() => {
+  "use strict";
 
-        .prefecture-btn {
-            background-color: var(--tifo-card-bg);
-            color: var(--tifo-primary-dark);
-            font-weight: bold;
-            padding: 0.5rem 1.25rem;
-            border-radius: 9999px;
-            border: 2px solid var(--tifo-card-border);
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-        }
-        .prefecture-btn:hover {
-            transform: translateY(-2px);
-            border-color: var(--tifo-primary);
-            box-shadow: 0 6px 12px -3px rgba(79, 209, 197, 0.3);
-        }
-        .tab-button {
-            padding: 0.75rem 1rem;
-            border-bottom: 3px solid transparent;
-            font-weight: 600;
-            color: #A0AEC0;
-            transition: all 0.2s ease;
-        }
-        .tab-button:hover {
-            background-color: #F7FAFC;
-            color: #4A5568;
-        }
-        .tab-button.active {
-            color: var(--tifo-primary);
-            border-bottom-color: var(--tifo-primary);
-        }
-        .rank-badge {
-            width: 2.25rem; height: 2.25rem; border-radius: 50%; display: inline-flex;
-            align-items: center; justify-content: center; font-weight: bold; color: white;
-            flex-shrink: 0; font-size: 1rem;
-        }
-        .rank-1 { background-color: #FFD700; }
-        .rank-2 { background-color: #C0C0C0; }
-        .rank-3 { background-color: #CD7F32; }
-        .rank-default { background-color: #A9A9A9; }
-        
-        .pref-badge {
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 2px 8px;
-            border-radius: 9999px;
-        }
-        .pref-toyama { background-color: var(--color-toyama-bg); color: var(--color-pref-text); }
-        .pref-ishikawa { background-color: var(--color-ishikawa-bg); color: var(--color-pref-text); }
-        .pref-fukui { background-color: var(--color-fukui-bg); color: var(--color-pref-text); }
-        
-        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+  const DATA_ROOT = "./";
+  const PREFS = ["富山", "石川", "福井"];
+  const COLORS = { 富山: "#45a666", 石川: "#178ab6", 福井: "#3b467e" };
+  const ID_COLUMNS = new Set(["日付", "月", "TIF", "回答場所", "移動元", "移動先"]);
+  const CORE_COLUMNS = ["回答数", "旅行全体満足度合計", "旅行全体満足度回答数", "商品サービス満足度合計", "商品サービス満足度回答数", "推奨度合計", "推奨度回答数", "推奨者", "中立者", "非推奨者"];
+  const numberFormat = new Intl.NumberFormat("ja-JP");
+  const state = { manifest: null, snapshotRows: [], monthlyRows: [], activeRows: [], activeDailyRows: null, activeRange: null, mode: "all", dailyCache: new Map(), routeCache: new Map(), fetchCache: new Map(), requestId: 0, routeCandidates: new Map() };
 
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; }
-        .modal-content { background-color: white; padding: 2rem; border-radius: 1rem; max-width: 90%; width: 700px; max-height: 80vh; overflow-y: auto; }
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+  const escapeHtml = value => String(value ?? "").replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
+  const iconSvg = (name, className = "") => `<svg class="tifo-icon ${className}" aria-hidden="true"><use href="#icon-${name}"></use></svg>`;
+  const cssPref = pref => `--pref-color:${COLORS[pref] || "#159b8c"}`;
+  const numeric = value => Number.isFinite(Number(value)) ? Number(value) : 0;
+  const sum = (rows, column) => rows.reduce((total, row) => total + numeric(row[column]), 0);
+  const ratio = (numerator, denominator) => denominator > 0 ? numerator / denominator : null;
+  const average = (row, sumColumn, countColumn) => ratio(numeric(row[sumColumn]), numeric(row[countColumn]));
+  const nps = row => { const valid = numeric(row["推奨度回答数"]); return valid ? ((numeric(row["推奨者"]) - numeric(row["非推奨者"])) / valid) * 100 : null; };
+  const formatScore = (value, digits = 1) => value === null || !Number.isFinite(value) ? "—" : value.toFixed(digits);
+  const formatDate = value => value ? value.replace(/-/g, "/") : "—";
+  const isDisplayFacility = name => !/^(?:なし|無し|該当なし|該当施設なし|選択なし|選択無し|選択されていません|特になし|特に無し|未定|不明|無回答|未回答|その他|（回答場所不明）)$/.test(String(name || "").trim());
 
-        /* Markdown表示用スタイル */
-        .markdown-body h1 { font-size: 1.75rem; font-weight: bold; color: var(--tifo-primary); border-bottom: 2px solid var(--tifo-card-border); padding-bottom: 0.5rem; margin-bottom: 1rem; }
-        .markdown-body h2 { font-size: 1.5rem; font-weight: bold; margin-top: 2rem; margin-bottom: 1rem; padding-left: 0.75rem; border-left: 4px solid var(--tifo-primary); color: var(--tifo-text); }
-        .markdown-body h3 { font-size: 1.25rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #4A5568; }
-        .markdown-body hr { border-top: 1px solid var(--tifo-card-border); margin: 2rem 0; }
-        .markdown-body ul { list-style: none; padding-left: 0; margin: 1rem 0; }
-        .markdown-body li { background-color: #F7FAFC; border-radius: 0.5rem; padding: 0.75rem 1rem; margin-bottom: 0.5rem; position: relative; padding-left: 2rem; }
-        .markdown-body li::before { content: '🐾'; position: absolute; left: 0.75rem; top: 0.75rem; color: var(--tifo-primary); }
-        .markdown-body strong { color: var(--tifo-primary-dark); font-weight: bold; }
-        .markdown-body p { margin-bottom: 1rem; line-height: 1.7; }
-    </style>
+  function parseCSV(text) {
+    const rows = []; let row = [], field = "", quoted = false;
+    const input = text.replace(/^\ufeff/, "");
+    for (let i = 0; i < input.length; i += 1) {
+      const char = input[i];
+      if (quoted) {
+        if (char === '"' && input[i + 1] === '"') { field += '"'; i += 1; }
+        else if (char === '"') quoted = false;
+        else field += char;
+      } else if (char === '"') quoted = true;
+      else if (char === ",") { row.push(field); field = ""; }
+      else if (char === "\n") { row.push(field); if (row.some(cell => cell !== "")) rows.push(row); row = []; field = ""; }
+      else if (char !== "\r") field += char;
+    }
+    if (field || row.length) { row.push(field); rows.push(row); }
+    if (rows.length < 2) return [];
+    const headers = rows[0];
+    return rows.slice(1).map(values => {
+      const item = {};
+      headers.forEach((header, index) => { const raw = values[index] ?? ""; item[header] = ID_COLUMNS.has(header) ? raw : numeric(raw); });
+      return item;
+    });
+  }
+
+  async function fetchText(path) {
+    if (!state.fetchCache.has(path)) {
+      state.fetchCache.set(path, fetch(`${DATA_ROOT}${path}`, { cache: "no-cache" }).then(response => {
+        if (!response.ok) throw new Error(`${path} を読み込めませんでした（${response.status}）`);
+        return response.text();
+      }));
+    }
+    return state.fetchCache.get(path);
+  }
+  async function fetchCSV(path) { return parseCSV(await fetchText(path)); }
+
+  function emptyStats(ids = {}) {
+    const result = { ...ids };
+    CORE_COLUMNS.forEach(column => { result[column] = 0; });
+    state.manifest.dimensions.forEach(dimension => dimension.columns.forEach(column => { result[column] = 0; }));
+    return result;
+  }
+  function addStats(target, source) {
+    CORE_COLUMNS.forEach(column => { target[column] += numeric(source[column]); });
+    state.manifest.dimensions.forEach(dimension => dimension.columns.forEach(column => { target[column] += numeric(source[column]); }));
+    return target;
+  }
+  function aggregateFacilities(rows) {
+    const grouped = new Map();
+    rows.forEach(row => {
+      const key = `${row.TIF}\u0000${row["回答場所"]}`;
+      if (!grouped.has(key)) grouped.set(key, emptyStats({ TIF: row.TIF, "回答場所": row["回答場所"] }));
+      addStats(grouped.get(key), row);
+    });
+    return [...grouped.values()];
+  }
+  function aggregatePrefectures(rows = state.activeRows) {
+    const grouped = new Map(PREFS.map(pref => [pref, emptyStats({ TIF: pref })]));
+    rows.forEach(row => { if (!grouped.has(row.TIF)) grouped.set(row.TIF, emptyStats({ TIF: row.TIF })); addStats(grouped.get(row.TIF), row); });
+    return grouped;
+  }
+  function aggregateMonths(rows) {
+    const grouped = new Map();
+    rows.forEach(row => {
+      const month = (row["日付"] || row["月"] || "").slice(0, 7); if (!month) return;
+      const key = `${month}\u0000${row.TIF}`;
+      if (!grouped.has(key)) grouped.set(key, emptyStats({ 月: month, TIF: row.TIF }));
+      addStats(grouped.get(key), row);
+    });
+    return [...grouped.values()];
+  }
+
+  function dimensionOptions(select, allowedKeys = null) {
+    const dimensions = state.manifest.dimensions.filter(dimension => !allowedKeys || allowedKeys.includes(dimension.key));
+    select.innerHTML = dimensions.map(dimension => `<option value="${escapeHtml(dimension.key)}">${escapeHtml(dimension.label)}</option>`).join("");
+  }
+  function selectedDimension(select) { return state.manifest.dimensions.find(dimension => dimension.key === select.value) || state.manifest.dimensions[0]; }
+  function detailOptions(dimensionSelect, detailSelect, preferred = "") {
+    const dimension = selectedDimension(dimensionSelect);
+    detailSelect.innerHTML = dimension.columns.map(column => `<option value="${escapeHtml(column)}">${escapeHtml(column)}</option>`).join("");
+    if (preferred && dimension.columns.includes(preferred)) detailSelect.value = preferred;
+  }
+  function setLoading(visible, label = "データを読み込んでいます") {
+    const element = $("#loading-state"); element.classList.toggle("is-visible", visible); $("span:last-child", element).textContent = label;
+  }
+  function showError(error) { const panel = $("#error-panel"); panel.hidden = false; panel.textContent = `データの読み込み中にエラーが発生しました。${error.message || error}`; console.error(error); }
+  function clearError() { $("#error-panel").hidden = true; }
+
+  async function loadDailyYear(year) {
+    if (!state.dailyCache.has(year)) { const file = state.manifest.files.daily[String(year)]; if (!file) return []; state.dailyCache.set(year, fetchCSV(file)); }
+    return state.dailyCache.get(year);
+  }
+  function yearsBetween(start, end) { const years = []; for (let year = Number(start.slice(0, 4)); year <= Number(end.slice(0, 4)); year += 1) years.push(year); return years; }
+
+  async function applyRange(start, end, mode = "custom") {
+    if (!start || !end || start > end) throw new Error("開始日と終了日を正しい順序で指定してください。");
+    const boundedStart = start < state.manifest.min_date ? state.manifest.min_date : start;
+    const boundedEnd = end > state.manifest.max_date ? state.manifest.max_date : end;
+    if (boundedStart > boundedEnd) throw new Error("指定期間にデータがありません。");
+    const requestId = ++state.requestId; setLoading(true, "該当年の集計データを読み込んでいます"); clearError();
+    try {
+      const chunks = await Promise.all(yearsBetween(boundedStart, boundedEnd).map(loadDailyYear));
+      if (requestId !== state.requestId) return;
+      const daily = chunks.flat().filter(row => row["日付"] >= boundedStart && row["日付"] <= boundedEnd);
+      state.activeDailyRows = daily; state.activeRows = aggregateFacilities(daily); state.activeRange = { start: boundedStart, end: boundedEnd }; state.mode = mode;
+      $("#start-date").value = boundedStart; $("#end-date").value = boundedEnd;
+      $("#period-message").textContent = `${formatDate(boundedStart)}〜${formatDate(boundedEnd)}を、${numberFormat.format(sum(state.activeRows, "回答数"))}件の回答から再集計しています。`;
+      $("#movement-list").innerHTML = ""; renderAll();
+    } finally { if (requestId === state.requestId) setLoading(false); }
+  }
+  function dateShift(dateString, months = 0, years = 0) {
+    const [year, month, day] = dateString.split("-").map(Number); const date = new Date(Date.UTC(year + years, month - 1 + months, day)); return date.toISOString().slice(0, 10);
+  }
+  function setPresetActive(name) { $$(".preset-button").forEach(button => button.classList.toggle("is-active", button.dataset.preset === name)); }
+  async function handlePreset(name) {
+    setPresetActive(name); const custom = name === "custom";
+    $("#start-date").disabled = !custom; $("#end-date").disabled = !custom; $("#apply-period").disabled = !custom;
+    if (custom) return;
+    if (name === "all") {
+      state.requestId += 1; state.mode = "all"; state.activeRows = state.snapshotRows; state.activeDailyRows = null; state.activeRange = { start: state.manifest.min_date, end: state.manifest.max_date };
+      $("#start-date").value = state.manifest.min_date; $("#end-date").value = state.manifest.max_date;
+      $("#period-message").textContent = `全期間（${formatDate(state.manifest.min_date)}〜${formatDate(state.manifest.max_date)}）の集計済みデータを表示しています。`;
+      $("#movement-list").innerHTML = ""; setLoading(false); renderAll(); return;
+    }
+    const end = state.manifest.max_date; const start = name === "1y" ? dateShift(end, 0, -1) : dateShift(end, -3, 0);
+    await applyRange(start < state.manifest.min_date ? state.manifest.min_date : start, end, name);
+  }
+
+  function prefCard(pref, stats, facilityCount) {
+    const satisfaction = average(stats, "旅行全体満足度合計", "旅行全体満足度回答数"); const score = nps(stats);
+    return `<article class="prefecture-card" style="${cssPref(pref)}"><h3><b>${iconSvg("pin")}${pref}県</b><span>${numberFormat.format(facilityCount)}施設・エリア</span></h3><div class="metric-grid">
+      <div class="metric-block"><small class="metric-label">${iconSvg("responses", "is-small")}回答数</small><strong>${numberFormat.format(numeric(stats["回答数"]))}<span>件</span></strong></div>
+      <div class="metric-block"><small class="metric-label">${iconSvg("heart", "is-small")}NPS</small><strong>${formatScore(score)}</strong></div>
+      <div class="metric-block"><small class="metric-label">${iconSvg("star", "is-small")}旅行満足度</small><strong>${formatScore(satisfaction, 2)}<span>/ 5</span></strong></div>
+      <div class="metric-block"><small class="metric-label">${iconSvg("responses", "is-small")}NPS有効回答</small><strong>${numberFormat.format(numeric(stats["推奨度回答数"]))}<span>件</span></strong></div>
+    </div></article>`;
+  }
+  function renderCompare() {
+    const totals = aggregatePrefectures();
+    $("#prefecture-cards").innerHTML = PREFS.map(pref => prefCard(pref, totals.get(pref), state.activeRows.filter(row => row.TIF === pref && numeric(row["回答数"]) > 0 && isDisplayFacility(row["回答場所"])).length)).join("");
+    const dimension = selectedDimension($("#compare-dimension")); const overall = emptyStats(); PREFS.forEach(pref => addStats(overall, totals.get(pref)));
+    const top = [...dimension.columns].sort((a, b) => numeric(overall[b]) - numeric(overall[a])).slice(0, 8);
+    const header = `<div class="compare-row"><div class="compare-label">${escapeHtml(dimension.label)}</div>${PREFS.map(pref => `<div class="compare-label" style="color:${COLORS[pref]}">${pref}県</div>`).join("")}</div>`;
+    const rows = top.map(column => {
+      const values = PREFS.map(pref => ratio(numeric(totals.get(pref)[column]), numeric(totals.get(pref)["回答数"]))); const max = Math.max(...values.map(value => value || 0), .01);
+      return `<div class="compare-row"><div class="compare-label">${escapeHtml(column)}</div>${PREFS.map((pref, index) => { const value = values[index]; const width = value === null ? 0 : (value / max) * 100; return `<div class="bar-cell" style="${cssPref(pref)}"><div class="bar-track"><div class="bar-fill" style="--width:${width}%"></div></div><span class="bar-value">${value === null ? "—" : `${(value * 100).toFixed(1)}%`}</span></div>`; }).join("")}</div>`;
+    }).join("");
+    $("#comparison-table").innerHTML = header + (rows || `<p class="empty-state">データがありません。</p>`);
+  }
+
+  function rankingValue(row, metric, detail) {
+    if (metric === "responses") return numeric(row["回答数"]);
+    if (metric === "nps") return nps(row);
+    if (metric === "satisfaction") return average(row, "旅行全体満足度合計", "旅行全体満足度回答数");
+    const value = ratio(numeric(row[detail]), numeric(row["回答数"])); return value === null ? null : value * 100;
+  }
+  function renderRanking() {
+    const metric = $("#ranking-metric").value; const segmentMode = metric === "segment";
+    $("#ranking-dimension-wrap").classList.toggle("is-hidden", !segmentMode); $("#ranking-detail-wrap").classList.toggle("is-hidden", !segmentMode);
+    const detail = $("#ranking-detail").value; const pref = $("#ranking-prefecture").value; const query = $("#ranking-search").value.trim().toLowerCase(); const minSample = numeric($("#min-sample").value);
+    const data = state.activeRows.filter(row => isDisplayFacility(row["回答場所"])).filter(row => numeric(row["回答数"]) >= minSample).filter(row => pref === "all" || row.TIF === pref).filter(row => !query || row["回答場所"].toLowerCase().includes(query))
+      .map(row => ({ row, score: rankingValue(row, metric, detail) })).filter(item => item.score !== null && Number.isFinite(item.score)).sort((a, b) => b.score - a.score || numeric(b.row["回答数"]) - numeric(a.row["回答数"])).slice(0, 100);
+    const unit = metric === "responses" ? "件" : metric === "satisfaction" ? "点" : metric === "segment" ? "%" : "";
+    $("#ranking-summary").textContent = `${minSample}件以上を対象に、${numberFormat.format(data.length)}施設・エリアを表示しています。NPSは推奨者割合から非推奨者割合を引いた値です。`;
+    $("#ranking-body").innerHTML = data.length ? data.map((item, index) => `<tr><td><span class="rank-number ${index < 3 ? `rank-${index + 1}` : ""}">${index + 1}</span></td><td><strong>${escapeHtml(item.row["回答場所"])}</strong></td><td><span class="pref-pill" style="${cssPref(item.row.TIF)}">${escapeHtml(item.row.TIF)}</span></td><td><strong>${metric === "responses" ? numberFormat.format(item.score) : item.score.toFixed(metric === "satisfaction" ? 2 : 1)}${unit}</strong></td><td>${numberFormat.format(numeric(item.row["回答数"]))}件</td></tr>`).join("") : `<tr><td colspan="5">条件に合うデータがありません。</td></tr>`;
+  }
+
+  function metricValue(row, metric) { if (metric === "responses") return numeric(row["回答数"]); if (metric === "nps") return nps(row); return average(row, "旅行全体満足度合計", "旅行全体満足度回答数"); }
+  function renderTrend() {
+    const metric = $("#trend-metric").value; let source = state.activeDailyRows ? aggregateMonths(state.activeDailyRows) : state.monthlyRows;
+    if (state.activeRange) source = source.filter(row => row["月"] >= state.activeRange.start.slice(0, 7) && row["月"] <= state.activeRange.end.slice(0, 7));
+    const months = [...new Set(source.map(row => row["月"]))].sort(); const byKey = new Map(source.map(row => [`${row["月"]}\u0000${row.TIF}`, row]));
+    $("#trend-legend").innerHTML = PREFS.map(pref => `<span class="legend-item" style="${cssPref(pref)}"><i class="legend-swatch"></i>${pref}県</span>`).join("");
+    if (!months.length) { $("#trend-chart").innerHTML = `<div class="empty-state">時系列データがありません。</div>`; return; }
+    const allValues = source.map(row => metricValue(row, metric)).filter(value => value !== null && Number.isFinite(value));
+    const min = metric === "nps" ? -100 : 0; const max = metric === "nps" ? 100 : metric === "satisfaction" ? 5 : Math.max(...allValues, 1) * 1.08;
+    const width = 920, height = 320, left = 54, right = 18, top = 16, bottom = 45, innerW = width - left - right, innerH = height - top - bottom;
+    const x = index => left + (months.length === 1 ? innerW / 2 : (index / (months.length - 1)) * innerW); const y = value => top + ((max - value) / (max - min || 1)) * innerH;
+    const grid = Array.from({ length: 5 }, (_, index) => { const value = max - ((max - min) * index / 4); const yy = y(value); return `<line class="chart-grid" x1="${left}" y1="${yy}" x2="${width - right}" y2="${yy}"></line><text class="chart-label" x="${left - 8}" y="${yy + 4}" text-anchor="end">${metric === "responses" ? Math.round(value) : value.toFixed(1)}</text>`; }).join("");
+    const labels = months.map((month, index) => index % Math.max(1, Math.ceil(months.length / 10)) === 0 || index === months.length - 1 ? `<text class="chart-label" x="${x(index)}" y="${height - 17}" text-anchor="middle">${month.replace("-", "/")}</text>` : "").join("");
+    const lines = PREFS.map(pref => { const points = months.map((month, index) => { const row = byKey.get(`${month}\u0000${pref}`); const value = row ? metricValue(row, metric) : null; return value === null ? null : { px: x(index), py: y(value), value }; }).filter(Boolean); if (!points.length) return ""; return `<polyline class="chart-line" style="${cssPref(pref)}" points="${points.map(point => `${point.px},${point.py}`).join(" ")}"></polyline>${points.map(point => `<circle class="chart-point" style="${cssPref(pref)}" cx="${point.px}" cy="${point.py}" r="3"><title>${pref}県 ${formatScore(point.value, metric === "responses" ? 0 : 1)}</title></circle>`).join("")}`; }).join("");
+    $("#trend-chart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">${grid}${labels}${lines}</svg>`;
+    $("#trend-table").textContent = `${months[0].replace("-", "/")}〜${months.at(-1).replace("-", "/")}・月次集計`;
+  }
+
+  function candidateScore(row, detail, prefTotal, maxResponses) {
+    const responses = numeric(row["回答数"]); const share = ratio(numeric(row[detail]), responses) || 0; const base = ratio(numeric(prefTotal[detail]), numeric(prefTotal["回答数"])) || .001;
+    const affinity = Math.min(2, share / base); const satisfaction = average(row, "旅行全体満足度合計", "旅行全体満足度回答数") ?? 2.5; const confidence = Math.log1p(responses) / Math.log1p(Math.max(maxResponses, 1));
+    return { score: 50 * (affinity / 2) + 30 * (satisfaction / 5) + 20 * confidence, share, affinity, satisfaction };
+  }
+  function buildRoute() {
+    const order = $("#route-order").value.split(","); const detail = $("#route-detail").value; const totals = aggregatePrefectures(); const minSample = numeric($("#min-sample").value); state.routeCandidates.clear();
+    order.forEach(pref => { const prefRows = state.activeRows.filter(row => row.TIF === pref && isDisplayFacility(row["回答場所"]) && numeric(row["回答数"]) >= minSample && numeric(row[detail]) > 0); const maxResponses = Math.max(...prefRows.map(row => numeric(row["回答数"])), 1); const candidates = prefRows.map(row => ({ row, ...candidateScore(row, detail, totals.get(pref), maxResponses) })).sort((a, b) => b.score - a.score).slice(0, 8); state.routeCandidates.set(pref, candidates); });
+    $("#route-result").innerHTML = order.map((pref, index) => { const candidates = state.routeCandidates.get(pref) || []; if (!candidates.length) return `<article class="route-stop" style="${cssPref(pref)}"><span class="route-day">DAY ${index + 1}</span><h3 class="heading-title">${iconSvg("pin")}${pref}県</h3><p class="route-reason">条件に合う候補がありません。</p></article>`; const first = candidates[0]; return `<article class="route-stop" data-pref="${pref}" style="${cssPref(pref)}"><span class="route-day">DAY ${index + 1}</span><h3 class="heading-title">${iconSvg("pin")}${pref}県</h3><label>立ち寄り候補<select class="route-candidate">${candidates.map((candidate, candidateIndex) => `<option value="${candidateIndex}">${escapeHtml(candidate.row["回答場所"])}</option>`).join("")}</select></label><div class="route-score"><strong data-role="score">${first.score.toFixed(0)}</strong><span>/ 100</span></div><p class="route-reason" data-role="reason">${escapeHtml(detail)}の回答割合 ${first.share.toLocaleString("ja-JP", { style: "percent", maximumFractionDigits: 1 })}・県平均比 ${first.affinity.toFixed(2)}倍・満足度 ${formatScore(first.satisfaction, 2)}</p></article>`; }).join("");
+  }
+  function updateRouteCard(select) {
+    const card = select.closest(".route-stop"); const candidate = state.routeCandidates.get(card.dataset.pref)?.[numeric(select.value)]; if (!candidate) return; const detail = $("#route-detail").value;
+    $("[data-role='score']", card).textContent = candidate.score.toFixed(0); $("[data-role='reason']", card).textContent = `${detail}の回答割合 ${candidate.share.toLocaleString("ja-JP", { style: "percent", maximumFractionDigits: 1 })}・県平均比 ${candidate.affinity.toFixed(2)}倍・満足度 ${formatScore(candidate.satisfaction, 2)}`;
+  }
+
+  async function loadRouteRows() {
+    if (state.mode === "all") { const key = "all"; if (!state.routeCache.has(key)) state.routeCache.set(key, fetchCSV(state.manifest.files.routes_all)); return state.routeCache.get(key); }
+    const chunks = await Promise.all(yearsBetween(state.activeRange.start, state.activeRange.end).map(year => { const key = String(year), file = state.manifest.files.routes[key]; if (!file) return []; if (!state.routeCache.has(key)) state.routeCache.set(key, fetchCSV(file)); return state.routeCache.get(key); }));
+    return chunks.flat().filter(row => row["日付"] >= state.activeRange.start && row["日付"] <= state.activeRange.end);
+  }
+  async function renderMovements() {
+    const button = $("#load-movements"); button.disabled = true; button.innerHTML = `${iconSvg("refresh")}読み込み中`; setLoading(true, "回遊データを読み込んでいます");
+    try {
+      const rows = await loadRouteRows(); const grouped = new Map();
+      rows.forEach(row => { const key = `${row.TIF}\u0000${row["移動元"]}\u0000${row["移動先"]}`; if (!grouped.has(key)) grouped.set(key, { TIF: row.TIF, from: row["移動元"], to: row["移動先"], count: 0 }); grouped.get(key).count += numeric(row["回答数"]); });
+      const top = [...grouped.values()].sort((a, b) => b.count - a.count).slice(0, 20);
+      $("#movement-list").innerHTML = top.length ? top.map(edge => `<div class="movement-row" style="${cssPref(edge.TIF)}"><span title="${escapeHtml(edge.from)}">${escapeHtml(edge.from)}</span>${iconSvg("route", "is-small")}<span title="${escapeHtml(edge.to)}">${escapeHtml(edge.to)}</span><b>${numberFormat.format(edge.count)}件</b></div>`).join("") : `<p class="inline-note">この期間には表示できる回遊データがありません。</p>`;
+    } catch (error) { showError(error); } finally { button.disabled = false; button.innerHTML = `${iconSvg("refresh")}回遊データを再表示`; setLoading(false); }
+  }
+
+  function updateFacilityOptions() {
+    const pref = $("#facility-prefecture").value, query = $("#facility-search").value.trim().toLowerCase(), current = $("#facility-select").value;
+    const rows = state.activeRows.filter(row => row.TIF === pref && isDisplayFacility(row["回答場所"]) && (!query || row["回答場所"].toLowerCase().includes(query))).sort((a, b) => numeric(b["回答数"]) - numeric(a["回答数"]));
+    $("#facility-select").innerHTML = `<option value="">選択してください（${rows.length}件）</option>${rows.map(row => `<option value="${escapeHtml(row["回答場所"])}">${escapeHtml(row["回答場所"])}（${numberFormat.format(numeric(row["回答数"]))}件）</option>`).join("")}`;
+    if (rows.some(row => row["回答場所"] === current)) $("#facility-select").value = current; else renderFacility();
+  }
+  function renderFacility() {
+    const pref = $("#facility-prefecture").value, name = $("#facility-select").value, container = $("#facility-profile"); const row = state.activeRows.find(item => item.TIF === pref && item["回答場所"] === name);
+    if (!row) { container.className = "facility-profile empty-state"; container.textContent = "施設・エリアを選択してください。"; return; }
+    const total = aggregatePrefectures().get(pref);
+    const cards = state.manifest.dimensions.map(dimension => { const items = dimension.columns.map(column => { const share = ratio(numeric(row[column]), numeric(row["回答数"])) || 0; const prefShare = ratio(numeric(total[column]), numeric(total["回答数"])) || 0; return { column, share, diff: (share - prefShare) * 100 }; }).filter(item => item.share > 0).sort((a, b) => b.share - a.share).slice(0, 5); return `<article class="attribute-card"><h4>${escapeHtml(dimension.label)}</h4>${items.length ? items.map(item => `<div class="attribute-row"><span title="${escapeHtml(item.column)}">${escapeHtml(item.column)}</span><div class="bar-track"><div class="bar-fill" style="--width:${Math.min(100, item.share * 100)}%"></div></div><span class="${item.diff > 0 ? "lift-up" : ""}">${(item.share * 100).toFixed(1)}%</span></div>`).join("") : `<p class="inline-note">データなし</p>`}</article>`; }).join("");
+    container.className = "facility-profile";
+    container.innerHTML = `<div class="facility-hero" style="${cssPref(pref)}"><div class="facility-title"><span class="pref-pill" style="${cssPref(pref)}">${pref}県</span><h3 class="heading-title">${iconSvg("facility")}${escapeHtml(name)}</h3><p>県平均との差は各構成比から確認できます。</p></div><div class="facility-metric"><small class="metric-label">${iconSvg("responses", "is-small")}回答数</small><strong>${numberFormat.format(numeric(row["回答数"]))}件</strong></div><div class="facility-metric"><small class="metric-label">${iconSvg("heart", "is-small")}NPS</small><strong>${formatScore(nps(row))}</strong></div><div class="facility-metric"><small class="metric-label">${iconSvg("star", "is-small")}旅行満足度</small><strong>${formatScore(average(row, "旅行全体満足度合計", "旅行全体満足度回答数"), 2)}</strong></div></div><div class="attribute-grid">${cards}</div>`;
+  }
+
+  function renderAll() { renderCompare(); renderRanking(); renderTrend(); updateFacilityOptions(); buildRoute(); }
+  function switchTab(name) { $$(".tab-button").forEach(button => button.classList.toggle("is-active", button.dataset.tab === name)); $$(".tab-panel").forEach(panel => { const active = panel.dataset.panel === name; panel.hidden = !active; panel.classList.toggle("is-active", active); }); }
+  function setupEvents() {
+    $$(".preset-button").forEach(button => button.addEventListener("click", () => handlePreset(button.dataset.preset).catch(showError)));
+    $("#apply-period").addEventListener("click", () => applyRange($("#start-date").value, $("#end-date").value).catch(showError));
+    $("#min-sample").addEventListener("change", () => { renderRanking(); buildRoute(); });
+    $$(".tab-button").forEach(button => button.addEventListener("click", () => switchTab(button.dataset.tab)));
+    $("#compare-dimension").addEventListener("change", renderCompare); $("#ranking-metric").addEventListener("change", renderRanking); $("#ranking-prefecture").addEventListener("change", renderRanking); $("#ranking-search").addEventListener("input", renderRanking);
+    $("#ranking-dimension").addEventListener("change", () => { detailOptions($("#ranking-dimension"), $("#ranking-detail")); renderRanking(); }); $("#ranking-detail").addEventListener("change", renderRanking); $("#trend-metric").addEventListener("change", renderTrend);
+    $("#route-dimension").addEventListener("change", () => { detailOptions($("#route-dimension"), $("#route-detail")); buildRoute(); }); $("#route-detail").addEventListener("change", buildRoute); $("#route-order").addEventListener("change", buildRoute); $("#build-route").addEventListener("click", buildRoute);
+    $("#route-result").addEventListener("change", event => { if (event.target.matches(".route-candidate")) updateRouteCard(event.target); }); $("#load-movements").addEventListener("click", renderMovements);
+    $("#facility-prefecture").addEventListener("change", () => { $("#facility-search").value = ""; updateFacilityOptions(); }); $("#facility-search").addEventListener("input", updateFacilityOptions); $("#facility-select").addEventListener("change", renderFacility);
+    const dialog = $("#data-dialog"); $("#data-info-button").addEventListener("click", () => dialog.showModal()); $("#close-dialog").addEventListener("click", () => dialog.close()); dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); });
+  }
+  function renderDataDialog() {
+    const manifest = state.manifest;
+    $("#data-dialog-content").innerHTML = `<p>北陸3県で統一された観光アンケートを、週1回、ブラウザ表示用に事前集計しています。</p><dl><dt>対象期間</dt><dd>${formatDate(manifest.min_date)}〜${formatDate(manifest.max_date)}</dd><dt>総回答数</dt><dd>${numberFormat.format(manifest.response_count)}件</dd><dt>集計更新</dt><dd>${escapeHtml(manifest.generated_at.replace("T", " ").replace("Z", " UTC"))}</dd><dt>出典</dt><dd>${escapeHtml(manifest.source)}</dd></dl><p>NPS・平均満足度は、選択期間の有効回答から都度再計算します。複数回答項目は構成比合計が100%を超える場合があります。回答数が少ない施設の順位は変動しやすいため、最小回答数を確認して利用してください。</p>`;
+  }
+  async function initialize() {
+    setLoading(true);
+    try {
+      const manifestResponse = await fetch(`${DATA_ROOT}tifo_data_manifest.json`, { cache: "no-cache" }); if (!manifestResponse.ok) throw new Error(`tifo_data_manifest.jsonを読み込めませんでした（${manifestResponse.status}）`); state.manifest = await manifestResponse.json();
+      const [snapshotRows, monthlyRows] = await Promise.all([fetchCSV(state.manifest.files.snapshot), fetchCSV(state.manifest.files.monthly)]);
+      state.snapshotRows = snapshotRows; state.monthlyRows = monthlyRows; state.activeRows = snapshotRows; state.activeRange = { start: state.manifest.min_date, end: state.manifest.max_date };
+      $("#start-date").min = state.manifest.min_date; $("#start-date").max = state.manifest.max_date; $("#end-date").min = state.manifest.min_date; $("#end-date").max = state.manifest.max_date; $("#start-date").value = state.manifest.min_date; $("#end-date").value = state.manifest.max_date;
+      $("#coverage-label").textContent = `${formatDate(state.manifest.min_date)}〜${formatDate(state.manifest.max_date)}｜${numberFormat.format(state.manifest.response_count)}回答`; $("#updated-label").textContent = `集計更新 ${state.manifest.generated_at.slice(0, 10).replace(/-/g, "/")}`;
+      dimensionOptions($("#compare-dimension")); $("#compare-dimension").value = "purpose";
+      dimensionOptions($("#ranking-dimension")); $("#ranking-dimension").value = "purpose"; detailOptions($("#ranking-dimension"), $("#ranking-detail"), "温泉や露天風呂");
+      dimensionOptions($("#route-dimension"), ["purpose", "companion", "age", "origin", "stay"]); $("#route-dimension").value = "purpose"; detailOptions($("#route-dimension"), $("#route-detail"), "地元の美味しいものを食べる");
+      renderDataDialog(); setupEvents(); renderAll(); clearError();
+    } catch (error) { showError(error); } finally { setLoading(false); }
+  }
+  document.addEventListener("DOMContentLoaded", initialize);
+})();
+  </script>
 </head>
-<body class="text-gray-800">
-    
-    <div id="loading-indicator" class="min-h-screen flex flex-col items-center justify-center p-4 text-center">
-        <p class="text-gray-600">データを読み込んでいます...</p>
+<body>
+  <svg class="svg-sprite" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></symbol>
+      <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></symbol>
+      <symbol id="icon-compare" viewBox="0 0 24 24"><path d="M5 19V9M12 19V5M19 19v-7"></path><path d="M3 19h18"></path></symbol>
+      <symbol id="icon-ranking" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"></path><path d="M3 6h.01M3 12h.01M3 18h.01"></path></symbol>
+      <symbol id="icon-trend" viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"></path><path d="m7 15 4-4 3 2 5-6"></path></symbol>
+      <symbol id="icon-route" viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Z"></path><path d="M9 3v15M15 6v15"></path></symbol>
+      <symbol id="icon-facility" viewBox="0 0 24 24"><path d="M4 21V5l8-3 8 3v16M2 21h20"></path><path d="M8 7h1M8 11h1M8 15h1M15 7h1M15 11h1M15 15h1M10 21v-3h4v3"></path></symbol>
+      <symbol id="icon-responses" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H6l-4 2 1.4-4.2A9 9 0 1 1 21 12Z"></path><path d="M8 12h.01M12 12h.01M16 12h.01"></path></symbol>
+      <symbol id="icon-heart" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"></path></symbol>
+      <symbol id="icon-star" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9Z"></path></symbol>
+      <symbol id="icon-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></symbol>
+      <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></symbol>
+      <symbol id="icon-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5"></path><path d="M19 12a7 7 0 1 0-2 5"></path></symbol>
+      <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"></path></symbol>
+    </defs>
+  </svg>
+  <a class="skip-link" href="#main">本文へ移動</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="./" aria-label="TIFO トップ">
+        <svg class="brand-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path fill="var(--mint)" d="M47.9,-51.9C62.4,-41.2,74.7,-25.9,78.2,-8.1C81.7,9.7,76.4,30.1,64.8,44.2C53.2,58.3,35.3,66.1,17.7,70.8C.1,75.5,-17.2,77.1,-33.1,70.2C-49,63.3,-63.5,47.9,-71.4,30.1C-79.3,12.3,-80.6,-7.8,-74.3,-24.1C-68,-40.4,-54.1,-52.9,-38.8,-60.1C-23.5,-67.3,-6.8,-69.2,8.9,-66.1C24.6,-63,47.9,-51.9,47.9,-51.9Z" transform="translate(100 100)"></path>
+          <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-size="46" font-weight="700" fill="white" letter-spacing="2">TIFO</text>
+        </svg>
+        <img class="brand-cat" src="./tifo.png" alt="TIFOちゃん" width="58" height="58">
+        <span><strong>北陸3県版 TIFO</strong><small>観光データアドバイザリー</small></span>
+      </a>
+      <button id="data-info-button" class="text-button" type="button"><svg class="tifo-icon is-small" aria-hidden="true"><use href="#icon-info"></use></svg>データについて</button>
     </div>
+  </header>
 
-    <main id="app-container" class="container mx-auto p-4 md:p-8 max-w-4xl hidden">
-        <div id="intro-section">
-            <!-- Header: Logo and Character -->
-            <header class="flex items-center justify-center gap-4 mb-4 text-center">
-                <a href="https://codefornoto.github.io/TIFO/" target="_blank" rel="noopener noreferrer">
-                    <div class="w-24 h-24">
-                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                            <path fill="var(--tifo-primary)" d="M47.9,-51.9C62.4,-41.2,74.7,-25.9,78.2,-8.1C81.7,9.7,76.4,30.1,64.8,44.2C53.2,58.3,35.3,66.1,17.7,70.8C0.1,75.5,-17.2,77.1,-33.1,70.2C-49,63.3,-63.5,47.9,-71.4,30.1C-79.3,12.3,-80.6,-7.8,-74.3,-24.1C-68,-40.4,-54.1,-52.9,-38.8,-60.1C-23.5,-67.3,-6.8,-69.2,8.9,-66.1C24.6,-63,47.9,-51.9,47.9,-51.9Z" transform="translate(100 100)"></path>
-                            <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-size="50" font-weight="bold" fill="white" letter-spacing="2">TIFO</text>
-                        </svg>
-                    </div>
-                </a>
-                <img src="tifo.png" alt="TIFOちゃん" class="h-20 w-20 object-contain">
-            </header>
-            <p class="text-lg text-gray-600 mb-8 text-center">観光猫型AIアドバイザリー</p>
+  <main id="main" class="page-shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">TOYAMA · ISHIKAWA · FUKUI</p>
+        <h1>富山・石川・福井を、<br>横ぐしで分析。</h1>
+        <p class="hero-copy">3県の強みを比べ、施設を探し、モデルルートの素材を組み立てるための観光データ分析基盤です。</p>
+      </div>
+      <div class="hero-meta" aria-live="polite">
+        <span><svg class="tifo-icon is-small" aria-hidden="true"><use href="#icon-calendar"></use></svg><b id="coverage-label">データを確認中</b></span>
+        <span><svg class="tifo-icon is-small" aria-hidden="true"><use href="#icon-refresh"></use></svg><b id="updated-label">更新日を確認中</b></span>
+      </div>
+    </section>
 
-            <!-- Prefecture Selection Buttons -->
-            <section class="mb-8">
-                <div class="flex items-center justify-center gap-4">
-                    <button class="prefecture-btn">富山</button>
-                    <a href="https://beeb-c4n.github.io/tifo/ishikawa/#" class="prefecture-btn" target="_blank" rel="noopener noreferrer">石川</a>
-                    <button class="prefecture-btn">福井</button>
-                </div>
-            </section>
-
-            <!-- Action Buttons -->
-            <section class="text-center mb-8 space-y-4">
-                <button id="analysis-btn" class="tifo-button text-lg px-8">
-                    ３県連携データ分析
-                </button>
-                <br>
-                <button id="insights-btn" class="tifo-button-secondary text-md px-6">
-                    Tifoちゃんのつぶやき
-                </button>
-            </section>
+    <section class="filter-panel" aria-labelledby="filter-title">
+      <div class="filter-heading">
+        <div class="heading-title">
+          <span class="heading-icon"><svg class="tifo-icon is-large" aria-hidden="true"><use href="#icon-calendar"></use></svg></span>
+          <div><p class="section-kicker">ANALYSIS PERIOD</p><h2 id="filter-title">分析期間</h2></div>
         </div>
-        <!-- Analysis Results Area -->
-        <div id="analysis-results" class="hidden space-y-8">
-            <section class="tifo-card">
-                <div class="flex border-b border-gray-200 mb-4">
-                    <button id="nps-tab" class="tab-button active">NPS</button>
-                    <button id="satisfaction-tab" class="tab-button">施設全体満足度</button>
-                </div>
-                <div id="ranking-container" class="custom-scrollbar h-96 overflow-y-auto pr-2 space-y-3"></div>
-            </section>
-            <section class="tifo-card">
-                <h2 class="text-xl font-bold mb-4 border-b border-gray-200 pb-3" style="color: var(--tifo-primary-dark);">セグメント別ランキング</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <select id="category-filter" class="w-full p-2.5 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-teal-400 focus:border-teal-400">
-                        <option selected value="">分析軸を選択...</option>
-                        <option value="age">年代</option>
-                        <option value="gender">性別</option>
-                        <option value="stay">宿泊数</option>
-                        <option value="companion">同伴者</option>
-                        <option value="purpose">旅の目的</option>
-                        <option value="prefecture">都道府県</option>
-                    </select>
-                    <select id="detail-filter" class="w-full p-2.5 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-teal-400 focus:border-teal-400" disabled>
-                        <option selected value="">詳細を選択...</option>
-                    </select>
-                </div>
-                <div id="segment-ranking-container" class="custom-scrollbar h-96 overflow-y-auto pr-2 space-y-3">
-                     <p class="text-gray-500 text-center pt-10">はじめに分析軸を選択してください。</p>
-                </div>
-            </section>
+        <div id="loading-state" class="loading-state" role="status"><span class="spinner"></span><span>データを読み込んでいます</span></div>
+      </div>
+      <div class="preset-group" aria-label="期間プリセット">
+        <button class="preset-button is-active" type="button" data-preset="all">全期間</button>
+        <button class="preset-button" type="button" data-preset="1y">直近1年</button>
+        <button class="preset-button" type="button" data-preset="3m">直近3か月</button>
+        <button class="preset-button" type="button" data-preset="custom">期間指定</button>
+      </div>
+      <div class="date-controls">
+        <label>開始日<input id="start-date" type="date" disabled></label>
+        <span class="date-separator" aria-hidden="true">—</span>
+        <label>終了日<input id="end-date" type="date" disabled></label>
+        <button id="apply-period" class="primary-button" type="button" disabled><svg class="tifo-icon" aria-hidden="true"><use href="#icon-refresh"></use></svg>この期間で集計</button>
+        <label class="sample-control">ランキングの最小回答数
+          <select id="min-sample">
+            <option value="10">10件</option>
+            <option value="30" selected>30件</option>
+            <option value="50">50件</option>
+            <option value="100">100件</option>
+          </select>
+        </label>
+      </div>
+      <p id="period-message" class="filter-message">全期間の集計済みデータを表示しています。</p>
+    </section>
+
+    <nav class="tab-list" aria-label="分析メニュー">
+      <button class="tab-button is-active" type="button" data-tab="compare"><svg class="tifo-icon" aria-hidden="true"><use href="#icon-compare"></use></svg>3県比較</button>
+      <button class="tab-button" type="button" data-tab="ranking"><svg class="tifo-icon" aria-hidden="true"><use href="#icon-ranking"></use></svg>ランキング</button>
+      <button class="tab-button" type="button" data-tab="trend"><svg class="tifo-icon" aria-hidden="true"><use href="#icon-trend"></use></svg>時系列</button>
+      <button class="tab-button" type="button" data-tab="route"><svg class="tifo-icon" aria-hidden="true"><use href="#icon-route"></use></svg>モデルルート</button>
+      <button class="tab-button" type="button" data-tab="facility"><svg class="tifo-icon" aria-hidden="true"><use href="#icon-facility"></use></svg>施設・エリア</button>
+    </nav>
+
+    <section id="panel-compare" class="tab-panel is-active" data-panel="compare">
+      <div class="section-heading">
+        <div class="heading-title"><span class="heading-icon"><svg class="tifo-icon is-large" aria-hidden="true"><use href="#icon-compare"></use></svg></span><div><p class="section-kicker">PREFECTURE COMPARISON</p><h2>3県サマリー</h2></div></div>
+        <p>同じ計算方法で、富山・石川・福井を比較します。</p>
+      </div>
+      <div id="prefecture-cards" class="prefecture-grid"></div>
+      <article class="panel-card">
+        <div class="card-heading split-heading">
+          <div><h3>属性構成の比較</h3><p>選択した切り口の上位項目を、3県で並べて確認できます。</p></div>
+          <label>比較する項目<select id="compare-dimension"></select></label>
         </div>
-    </main>
+        <div id="comparison-table" class="comparison-table"></div>
+      </article>
+    </section>
 
-    <!-- Footer -->
-    <footer class="w-full p-4">
-         <div class="text-center">
-            <button id="about-button" class="text-sm text-gray-500 hover:underline">TIFOとは</button>
+    <section id="panel-ranking" class="tab-panel" data-panel="ranking" hidden>
+      <div class="section-heading">
+        <div class="heading-title"><span class="heading-icon"><svg class="tifo-icon is-large" aria-hidden="true"><use href="#icon-ranking"></use></svg></span><div><p class="section-kicker">FACILITY RANKING</p><h2>北陸3県ランキング</h2></div></div>
+        <p>回答数だけでなく、NPS・満足度・属性との相性から比較できます。</p>
+      </div>
+      <article class="panel-card">
+        <div class="control-grid">
+          <label>ランキング指標<select id="ranking-metric">
+            <option value="responses">回答数</option>
+            <option value="nps">NPS</option>
+            <option value="satisfaction">旅行全体満足度</option>
+            <option value="segment">属性・関心の割合</option>
+          </select></label>
+          <label>県<select id="ranking-prefecture"><option value="all">3県すべて</option><option value="富山">富山</option><option value="石川">石川</option><option value="福井">福井</option></select></label>
+          <label id="ranking-dimension-wrap" class="is-hidden">分析軸<select id="ranking-dimension"></select></label>
+          <label id="ranking-detail-wrap" class="is-hidden">詳細<select id="ranking-detail"></select></label>
+          <label>施設名検索<input id="ranking-search" type="search" placeholder="施設・エリア名"></label>
         </div>
-    </footer>
-    
-    <!-- About Modal -->
-    <div id="about-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2 class="text-2xl font-bold mb-4">TIFOとは</h2>
-            <div id="about-text" class="text-sm text-gray-600 leading-relaxed space-y-2"></div>
-            <button id="close-about-modal-button" class="tifo-button mt-6 w-full">閉じる</button>
+        <div id="ranking-summary" class="inline-note"></div>
+        <div class="table-scroll"><table class="data-table"><thead><tr><th>順位</th><th>施設・エリア</th><th>県</th><th>スコア</th><th>回答数</th></tr></thead><tbody id="ranking-body"></tbody></table></div>
+      </article>
+    </section>
+
+    <section id="panel-trend" class="tab-panel" data-panel="trend" hidden>
+      <div class="section-heading">
+        <div class="heading-title"><span class="heading-icon"><svg class="tifo-icon is-large" aria-hidden="true"><use href="#icon-trend"></use></svg></span><div><p class="section-kicker">MONTHLY TREND</p><h2>3県の月次推移</h2></div></div>
+        <label>表示指標<select id="trend-metric"><option value="responses">回答数</option><option value="nps">NPS</option><option value="satisfaction">旅行全体満足度</option></select></label>
+      </div>
+      <article class="panel-card">
+        <div id="trend-legend" class="chart-legend"></div>
+        <div id="trend-chart" class="trend-chart" role="img" aria-label="3県の月次推移グラフ"></div>
+        <div id="trend-table" class="trend-table"></div>
+      </article>
+    </section>
+
+    <section id="panel-route" class="tab-panel" data-panel="route" hidden>
+      <div class="section-heading">
+        <div class="heading-title"><span class="heading-icon"><svg class="tifo-icon is-large" aria-hidden="true"><use href="#icon-route"></use></svg></span><div><p class="section-kicker">MODEL ROUTE WORKBENCH</p><h2>モデルルートの素材を組み立てる</h2></div></div>
+        <p>ターゲットとの相性・満足度・回答量から、各県の候補を抽出します。</p>
+      </div>
+      <article class="panel-card route-controls">
+        <div class="control-grid route-control-grid">
+          <label>県の順序<select id="route-order">
+            <option value="富山,石川,福井">富山 → 石川 → 福井</option><option value="福井,石川,富山">福井 → 石川 → 富山</option>
+            <option value="石川,富山,福井">石川 → 富山 → 福井</option><option value="石川,福井,富山">石川 → 福井 → 富山</option>
+          </select></label>
+          <label>ターゲット軸<select id="route-dimension"></select></label>
+          <label>ターゲット<select id="route-detail"></select></label>
+          <button id="build-route" class="primary-button" type="button"><svg class="tifo-icon" aria-hidden="true"><use href="#icon-route"></use></svg>候補を組み立てる</button>
         </div>
-    </div>
-    
-    <!-- Insights Modal -->
-    <div id="insights-modal" class="modal-overlay hidden">
-        <div class="modal-content custom-scrollbar">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold">Tifoちゃんのつぶやき</h2>
-                <button id="close-insights-modal-button" class="text-gray-400 hover:text-gray-600 text-3xl leading-none">&times;</button>
-            </div>
-            <div id="insights-text" class="markdown-body"></div>
+        <p class="inline-note">これは移動時間を自動計算する経路検索ではありません。データから各県の立ち寄り候補を比較し、企画のたたき台を作る機能です。</p>
+      </article>
+      <div id="route-result" class="route-result"></div>
+      <article class="panel-card movement-card">
+        <div class="card-heading"><h3 class="heading-title"><svg class="tifo-icon" aria-hidden="true"><use href="#icon-route"></use></svg>実回答から見る回遊ヒント</h3><p>前後の訪問地が記録されている回答だけを使った参考情報です。</p></div>
+        <button id="load-movements" class="secondary-button" type="button"><svg class="tifo-icon" aria-hidden="true"><use href="#icon-refresh"></use></svg>回遊データを表示</button>
+        <div id="movement-list" class="movement-list"></div>
+      </article>
+    </section>
+
+    <section id="panel-facility" class="tab-panel" data-panel="facility" hidden>
+      <div class="section-heading">
+        <div class="heading-title"><span class="heading-icon"><svg class="tifo-icon is-large" aria-hidden="true"><use href="#icon-facility"></use></svg></span><div><p class="section-kicker">FACILITY PROFILE</p><h2>施設・エリアを詳しく見る</h2></div></div>
+        <p>県内構成比との違いも確認でき、情報発信の方向を考えやすくします。</p>
+      </div>
+      <article class="panel-card">
+        <div class="facility-picker">
+          <label>県<select id="facility-prefecture"><option value="富山">富山</option><option value="石川">石川</option><option value="福井">福井</option></select></label>
+          <label>絞り込み<input id="facility-search" type="search" placeholder="施設・エリア名を検索"></label>
+          <label>施設・エリア<select id="facility-select"><option value="">選択してください</option></select></label>
         </div>
-    </div>
+      </article>
+      <div id="facility-profile" class="facility-profile empty-state">施設・エリアを選択してください。</div>
+    </section>
 
+    <section id="error-panel" class="error-panel" hidden role="alert"></section>
+  </main>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
+  <footer class="site-footer">
+    <p>Data: 北陸インバウンド観光DX・データコンソーシアム（CC BY）</p>
+    <p>TIFO — Tourism Intelligence for Hokuriku</p>
+  </footer>
 
-    let surveyData = [];
-    const loadingIndicator = document.getElementById('loading-indicator');
-    const appContainer = document.getElementById('app-container');
-
-    const filterOptions = {
-        age: ['10代','20代','30代','40代','50代','60代','70代','80代','90代','100代'],
-        gender: ['男性', '女性'],
-        stay: ['1泊', '2泊', '3泊', '4泊以上', '日帰り'],
-        companion: ['自分ひとり','恋人','友人','夫婦2人','団体旅行','親戚','親','職場の同僚','小学生以下連れの家族','中学生以下連れの家族','高校生連れの家族','災害支援'],
-        purpose: ['宿でのんびり過ごす','温泉や露天風呂','地元の美味しいものを食べる','花見や紅葉などの自然鑑賞','名所、旧跡の観光','テーマパーク（遊園地、動物園、博物館など）','買い物、アウトレット','お祭りやイベントへの参加・見物','スポーツ観戦や芸能鑑賞（コンサート等）','アウトドア（海水浴、釣り、登山など）','まちあるき、都市散策','各種体験（手作り、果物狩りなど）','スキー・スノボ、マリンスポーツ','その他スポーツ（ゴルフ、テニスなど）','ドライブ・ツーリング','友人・親戚を尋ねる','出張など仕事関係'],
-        prefecture: ['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県','茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県','新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県','徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県']
-    };
-    
-    // --- Function to parse CSV into an array of objects (Robust version) ---
-    const parseCSV = (csvText) => {
-        if (csvText.charCodeAt(0) === 0xFEFF) {
-            csvText = csvText.slice(1);
-        }
-        const lines = csvText.trim().replace(/\r/g, '').split('\n');
-        if (lines.length < 2) return [];
-
-        const csvRegex = /(?:^|,)(?:"([^"]*(?:""[^"]*)*)"|([^,]*))/g;
-        
-        const parseLine = (line) => {
-            const values = [];
-            let match;
-            csvRegex.lastIndex = 0;
-            while (match = csvRegex.exec(line)) {
-                let value = match[1] ? match[1].replace(/""/g, '"') : match[2];
-                values.push(value);
-            }
-            return values;
-        };
-
-        const headers = parseLine(lines[0]);
-        
-        return lines.slice(1).map(line => {
-            if (!line.trim()) return null;
-            const values = parseLine(line);
-            const entry = {};
-            headers.forEach((header, index) => {
-                const key = header.trim();
-                const rawValue = (values[index] || '').trim();
-                
-                if (rawValue === '') {
-                    entry[key] = null;
-                } else {
-                    const numValue = parseFloat(rawValue);
-                    entry[key] = !isNaN(numValue) ? numValue : rawValue;
-                }
-            });
-            if (entry['TIF']) {
-                entry['県'] = entry['TIF'];
-                delete entry['TIF'];
-            }
-            return entry;
-        }).filter(Boolean);
-    };
-
-    // --- Function to parse Markdown to HTML (Corrected Version) ---
-    const parseMarkdown = (mdText) => {
-        const lines = mdText.trim().replace(/\r/g, '').split('\n');
-        let html = '';
-        let inList = false;
-
-        const formatInline = (text) => text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-        lines.forEach(line => {
-            const trimmedLine = line.trim();
-
-            // Handle lists
-            if (trimmedLine.startsWith('- ')) {
-                if (!inList) {
-                    html += '<ul>';
-                    inList = true;
-                }
-                html += `<li>${formatInline(trimmedLine.substring(2))}</li>`;
-            } else {
-                // If a non-list line is encountered, close the list
-                if (inList) {
-                    html += '</ul>';
-                    inList = false;
-                }
-
-                // Handle other block elements
-                if (trimmedLine.startsWith('# ')) {
-                    html += `<h1>${formatInline(trimmedLine.substring(2))}</h1>`;
-                } else if (trimmedLine.startsWith('## ')) {
-                    html += `<h2>${formatInline(trimmedLine.substring(3))}</h2>`;
-                } else if (trimmedLine.startsWith('### ')) {
-                    html += `<h3>${formatInline(trimmedLine.substring(4))}</h3>`;
-                } else if (trimmedLine.match(/^---\s*$/)) {
-                    html += '<hr>';
-                } else if (trimmedLine.length > 0) {
-                    // This is a paragraph
-                    html += `<p>${formatInline(trimmedLine.replace(/  $/, '<br>'))}</p>`;
-                }
-            }
-        });
-
-        // Close any list that might be open at the end of the file
-        if (inList) {
-            html += '</ul>';
-        }
-
-        return html;
-    };
-
-
-    // --- Main initialization function ---
-    const initializeApp = async () => {
-        try {
-            const response = await fetch('./tif_score.csv');
-            if (!response.ok) {
-                throw new Error(`CSVファイルの読み込みに失敗しました: ${response.statusText}`);
-            }
-            const csvText = await response.text();
-            const allData = parseCSV(csvText);
-            
-            surveyData = allData.filter(item => item['全回答数'] >= 30);
-
-            if (surveyData.length === 0) {
-                 throw new Error('表示対象となるデータ（回答数30件以上）がありません。');
-            }
-            
-            loadingIndicator.classList.add('hidden');
-            document.body.classList.remove('overflow-hidden');
-            appContainer.classList.remove('hidden');
-            setupEventListeners();
-        } catch (error) {
-            loadingIndicator.innerHTML = `<p class="text-red-500 font-bold">エラーが発生しました。</p><p class="text-sm mt-2">${error.message}</p>`;
-            console.error(error);
-        }
-    };
-    
-    // --- Function to set up event listeners ---
-    const setupEventListeners = () => {
-        const analysisBtn = document.getElementById('analysis-btn');
-        const analysisResults = document.getElementById('analysis-results');
-        const introSection = document.getElementById('intro-section');
-        const npsTab = document.getElementById('nps-tab');
-        const satisfactionTab = document.getElementById('satisfaction-tab');
-        const categoryFilter = document.getElementById('category-filter');
-        const detailFilter = document.getElementById('detail-filter');
-        const aboutButton = document.getElementById('about-button');
-        const aboutModal = document.getElementById('about-modal');
-        const closeAboutModalButton = document.getElementById('close-about-modal-button');
-        const insightsBtn = document.getElementById('insights-btn');
-        const insightsModal = document.getElementById('insights-modal');
-        const closeInsightsModalButton = document.getElementById('close-insights-modal-button');
-        let currentTab = 'nps';
-
-        analysisBtn.addEventListener('click', () => {
-            analysisResults.classList.toggle('hidden');
-            if (analysisResults.classList.contains('hidden')) {
-                introSection.classList.remove('mb-8');
-                 appContainer.style.justifyContent = 'center';
-            } else {
-                introSection.classList.add('mb-8');
-                 appContainer.style.justifyContent = 'flex-start';
-                renderSimpleRanking(currentTab);
-            }
-        });
-
-        npsTab.addEventListener('click', () => {
-            if (currentTab !== 'nps') {
-                currentTab = 'nps';
-                npsTab.classList.add('active');
-                satisfactionTab.classList.remove('active');
-                renderSimpleRanking('nps');
-            }
-        });
-
-        satisfactionTab.addEventListener('click', () => {
-            if (currentTab !== 'satisfaction') {
-                currentTab = 'satisfaction';
-                satisfactionTab.classList.add('active');
-                npsTab.classList.remove('active');
-                renderSimpleRanking('satisfaction');
-            }
-        });
-        
-        categoryFilter.addEventListener('change', () => {
-            const selectedCategory = categoryFilter.value;
-            detailFilter.innerHTML = '<option selected value="">詳細を選択...</option>';
-            document.getElementById('segment-ranking-container').innerHTML = '<p class="text-gray-500 text-center pt-10">詳細を選択してください。</p>';
-
-            if (selectedCategory) {
-                filterOptions[selectedCategory].forEach(option => {
-                    const optionElement = document.createElement('option');
-                    optionElement.value = option;
-                    optionElement.textContent = option;
-                    detailFilter.appendChild(optionElement);
-                });
-                detailFilter.disabled = false;
-            } else {
-                detailFilter.disabled = true;
-                 document.getElementById('segment-ranking-container').innerHTML = '<p class="text-gray-500 text-center pt-10">はじめに分析軸を選択してください。</p>';
-            }
-        });
-        
-        detailFilter.addEventListener('change', renderSegmentRanking);
-        
-        // --- Modal Listeners ---
-        aboutButton.addEventListener('click', async () => {
-            try {
-                const response = await fetch('./aboutus.txt');
-                if (!response.ok) throw new Error('File not found');
-                const text = await response.text();
-                document.getElementById('about-text').innerHTML = text.replace(/\n/g, '<br>');
-                aboutModal.classList.remove('hidden');
-            } catch(e) {
-                document.getElementById('about-text').textContent = 'ファイルが読み込めませんでした。';
-                aboutModal.classList.remove('hidden');
-            }
-        });
-        closeAboutModalButton.addEventListener('click', () => aboutModal.classList.add('hidden'));
-        aboutModal.addEventListener('click', (e) => { if(e.target === aboutModal) aboutModal.classList.add('hidden'); });
-
-        insightsBtn.addEventListener('click', async () => {
-            try {
-                const response = await fetch('./tifo_insights.md');
-                if (!response.ok) throw new Error('File not found');
-                const mdText = await response.text();
-                document.getElementById('insights-text').innerHTML = parseMarkdown(mdText);
-                insightsModal.classList.remove('hidden');
-            } catch(e) {
-                document.getElementById('insights-text').textContent = 'ファイルが読み込めませんでした。';
-                insightsModal.classList.remove('hidden');
-            }
-        });
-        closeInsightsModalButton.addEventListener('click', () => insightsModal.classList.add('hidden'));
-        insightsModal.addEventListener('click', (e) => { if(e.target === insightsModal) insightsModal.classList.add('hidden'); });
-    };
-
-    // --- Ranking Card Drawing Function ---
-    const createRankingCard = (rank, name, score, prefecture, unit = '') => {
-        let rankClass = 'rank-default';
-        if (rank === 1) rankClass = 'rank-1';
-        if (rank === 2) rankClass = 'rank-2';
-        if (rank === 3) rankClass = 'rank-3';
-
-        const prefectureClasses = {
-            "富山": "pref-toyama",
-            "石川": "pref-ishikawa",
-            "福井": "pref-fukui",
-        };
-        const prefClass = prefectureClasses[prefecture] || 'bg-gray-200 text-gray-800';
-        const prefBadge = `<span class="pref-badge ${prefClass}">${prefecture}</span>`;
-        
-        const scoreDisplay = (typeof score === 'number')
-            ? (unit === '点' ? score.toFixed(2) : score.toFixed(1))
-            : 'N/A';
-
-        return `
-            <div class="flex items-center bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
-                <div class="rank-badge ${rankClass}">${rank}</div>
-                <div class="flex-grow ml-4">
-                    <p class="font-semibold text-gray-700">${name}</p>
-                    <div class="mt-1">${prefBadge}</div>
-                </div>
-                <div class="text-right">
-                    <p class="text-2xl font-bold" style="color: var(--tifo-primary-dark);">${scoreDisplay}<span class="text-sm text-gray-500 ml-1">${unit}</span></p>
-                </div>
-            </div>
-        `;
-    };
-    
-    // --- Data processing and rendering functions ---
-    const getSortableNPS = (value) => {
-        if (typeof value !== 'number') return -Infinity;
-        return Math.abs(value) <= 1 ? value * 100 : value;
-    };
-
-    const renderSimpleRanking = (type) => {
-        const rankingContainer = document.getElementById('ranking-container');
-        const sortKey = type === 'nps' ? 'NPS' : '施設全体満足度';
-
-        const sortedData = [...surveyData].sort((a, b) => {
-            const valA = type === 'nps' ? getSortableNPS(a[sortKey]) : (a[sortKey] || -Infinity);
-            const valB = type === 'nps' ? getSortableNPS(b[sortKey]) : (b[sortKey] || -Infinity);
-            return valB - valA;
-        });
-        
-        rankingContainer.innerHTML = sortedData
-            .map((item, index) => {
-                const scoreValue = item[sortKey];
-                const score = type === 'nps' ? getSortableNPS(scoreValue) : scoreValue;
-                return createRankingCard(index + 1, item['施設'], score, item['県'], type === 'satisfaction' ? '点' : '');
-            })
-            .join('');
-    };
-
-    const renderSegmentRanking = () => {
-        const segmentRankingContainer = document.getElementById('segment-ranking-container');
-        const filterValue = document.getElementById('detail-filter').value;
-
-        if (!filterValue) {
-            segmentRankingContainer.innerHTML = '<p class="text-gray-500 text-center pt-10">詳細を選択してください。</p>';
-            return;
-        }
-
-        const calculatedData = surveyData.map(item => {
-            const segmentValue = item[filterValue];
-            const percentage = (typeof segmentValue === 'number') ? segmentValue * 100 : -1;
-            return { ...item, percentage: percentage };
-        }).sort((a, b) => b.percentage - a.percentage);
-
-        segmentRankingContainer.innerHTML = calculatedData
-            .map((item, index) => {
-                const score = item.percentage < 0 ? 'N/A' : item.percentage;
-                return createRankingCard(index + 1, item['施設'], score, item['県'], '%');
-            })
-            .join('');
-    };
-
-    // --- Start the application ---
-    initializeApp();
-});
-</script>
-
+  <dialog id="data-dialog">
+    <div class="dialog-heading"><h2 class="heading-title"><svg class="tifo-icon" aria-hidden="true"><use href="#icon-info"></use></svg>このデータについて</h2><button id="close-dialog" class="dialog-close" type="button" aria-label="閉じる"><svg class="tifo-icon" aria-hidden="true"><use href="#icon-close"></use></svg></button></div>
+    <div id="data-dialog-content" class="dialog-content"></div>
+  </dialog>
+  <noscript><p class="noscript">このアプリの利用にはJavaScriptが必要です。</p></noscript>
 </body>
 </html>
-
