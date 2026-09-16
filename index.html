@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- TIFO HOKURIKU UI REVISION: 2026-09-16-v2 -->
+<!-- TIFO HOKURIKU UI REVISION: 2026-09-16-v5 -->
 <html lang="ja">
 <head>
   <meta charset="utf-8">
@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- アプリ固有のCSSとJavaScriptは、すべてこのHTML内に内包しています。 -->
   <style>
 :root {
   --mint: #4FD1C5; --mint-dark: #38B2AC; --mint-soft: #E6FFFA; --ink: #2D3748;
@@ -68,7 +69,7 @@ input:disabled, select:disabled { background: #f1f5f4; color: #94a39f; cursor: n
 .primary-button:disabled { opacity: .45; cursor: not-allowed; }
 .secondary-button { border: 1px solid var(--mint); border-bottom: 3px solid var(--mint-dark); background: #fff; color: var(--mint-dark); }
 .filter-message, .inline-note { margin: 14px 0 0; color: var(--muted); font-size: .78rem; }
-.tab-list { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; margin: 26px 0 32px; padding: 8px; overflow-x: auto; border: 1px solid var(--line); border-radius: 1.5rem; background: #fff; box-shadow: var(--shadow); scrollbar-width: thin; }
+.tab-list { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 6px; margin: 26px 0 32px; padding: 8px; overflow-x: auto; border: 1px solid var(--line); border-radius: 1.5rem; background: #fff; box-shadow: var(--shadow); scrollbar-width: thin; }
 .tab-button { display: flex; align-items: center; justify-content: center; gap: .45rem; min-width: 130px; border: 0; border-bottom: 3px solid transparent; border-radius: 1rem; background: transparent; color: var(--muted); padding: .8rem .65rem; font-weight: 800; }
 .tab-button:hover, .tab-button.is-active { color: var(--mint-dark); border-bottom-color: var(--mint); background: var(--mint-soft); }
 .tab-panel { animation: rise .22s ease-out; } @keyframes rise { from { opacity: 0; transform: translateY(5px); } }
@@ -87,6 +88,10 @@ input:disabled, select:disabled { background: #f1f5f4; color: #94a39f; cursor: n
 .comparison-table { margin-top: 22px; overflow-x: auto; }
 .compare-row { display: grid; grid-template-columns: minmax(170px,1.2fr) repeat(3,minmax(150px,1fr)); align-items: center; gap: 16px; min-width: 720px; padding: .72rem 0; border-top: 1px solid #edf2f1; }
 .compare-row:first-child { border-top: 0; } .compare-label { font-size: .8rem; font-weight: 700; }
+.comparison-table .compare-row.is-extra { display: none; }
+.comparison-table.is-expanded .compare-row.is-extra { display: grid; }
+.summary-toggle-wrap { display: flex; justify-content: center; margin-top: 16px; }
+.summary-toggle-wrap .attribute-toggle { width: min(320px,100%); margin-top: 0; }
 .bar-cell { display: grid; grid-template-columns: 1fr 48px; align-items: center; gap: 8px; } .bar-track { height: 8px; overflow: hidden; background: #edf3f2; border-radius: 999px; }
 .bar-fill { height: 100%; width: var(--width); background: var(--pref-color); border-radius: inherit; } .bar-value { color: var(--muted); font-size: .72rem; text-align: right; }
 .control-grid { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 12px; align-items: end; } .is-hidden { display: none !important; }
@@ -372,6 +377,38 @@ dialog::backdrop { background: rgba(10,32,29,.54); backdrop-filter: blur(3px); }
     if (metric === "satisfaction") return average(row, "旅行全体満足度合計", "旅行全体満足度回答数");
     const value = ratio(numeric(row[detail]), numeric(row["回答数"])); return value === null ? null : value * 100;
   }
+  function renderSummary() {
+    const totals = aggregatePrefectures();
+    const dimension = selectedDimension($("#summary-dimension"));
+    const overall = emptyStats();
+    PREFS.forEach(pref => addStats(overall, totals.get(pref)));
+    const naturalOrder = ["age", "stay", "income"].includes(dimension.key);
+    const columns = naturalOrder
+      ? [...dimension.columns]
+      : [...dimension.columns].sort((a, b) => numeric(overall[b]) - numeric(overall[a]) || a.localeCompare(b, "ja"));
+    const visibleColumns = columns.filter(column => numeric(overall[column]) > 0);
+    const header = `<div class="compare-row"><div class="compare-label">${escapeHtml(dimension.label)}</div>${PREFS.map(pref => `<div class="compare-label" style="color:${COLORS[pref]}">${pref}県</div>`).join("")}</div>`;
+    const rows = visibleColumns.map((column, rowIndex) => {
+      const values = PREFS.map(pref => ratio(numeric(totals.get(pref)[column]), numeric(totals.get(pref)["回答数"])));
+      const max = Math.max(...values.map(value => value || 0), .01);
+      return `<div class="compare-row${rowIndex >= 8 ? " is-extra" : ""}"><div class="compare-label">${escapeHtml(column)}</div>${PREFS.map((pref, index) => { const value = values[index]; const width = value === null ? 0 : (value / max) * 100; return `<div class="bar-cell" style="${cssPref(pref)}"><div class="bar-track"><div class="bar-fill" style="--width:${width}%"></div></div><span class="bar-value">${value === null ? "—" : `${(value * 100).toFixed(1)}%`}</span></div>`; }).join("")}</div>`;
+    }).join("");
+    const table = $("#summary-comparison-table");
+    table.classList.remove("is-expanded");
+    table.innerHTML = header + (rows || `<p class="empty-state">データがありません。</p>`);
+    const toggle = $("#summary-show-more");
+    toggle.hidden = visibleColumns.length <= 8;
+    toggle.textContent = `さらに表示（全${visibleColumns.length}件）`;
+    toggle.setAttribute("aria-expanded", "false");
+  }
+  function toggleSummaryRows() {
+    const table = $("#summary-comparison-table");
+    const toggle = $("#summary-show-more");
+    const expanded = table.classList.toggle("is-expanded");
+    const count = $$(".compare-row", table).length - 1;
+    toggle.textContent = expanded ? "最初の8件に戻す" : `さらに表示（全${count}件）`;
+    toggle.setAttribute("aria-expanded", String(expanded));
+  }
   function renderRanking() {
     const metric = $("#ranking-metric").value; const segmentMode = metric === "segment";
     $("#ranking-dimension-wrap").classList.toggle("is-hidden", !segmentMode); $("#ranking-detail-wrap").classList.toggle("is-hidden", !segmentMode);
@@ -623,13 +660,14 @@ dialog::backdrop { background: rgba(10,32,29,.54); backdrop-filter: blur(3px); }
     button.setAttribute("aria-expanded", String(expanded));
   }
 
-  function renderAll() { renderRanking(); renderTrend(); updateFacilityOptions(); buildRoute(); }
+  function renderAll() { renderSummary(); renderRanking(); renderTrend(); updateFacilityOptions(); buildRoute(); }
   function switchTab(name) { $$(".tab-button").forEach(button => button.classList.toggle("is-active", button.dataset.tab === name)); $$(".tab-panel").forEach(panel => { const active = panel.dataset.panel === name; panel.hidden = !active; panel.classList.toggle("is-active", active); }); }
   function setupEvents() {
     $$(".preset-button").forEach(button => button.addEventListener("click", () => handlePreset(button.dataset.preset).catch(showError)));
     $("#apply-period").addEventListener("click", () => applyRange($("#start-date").value, $("#end-date").value).catch(showError));
     $("#min-sample").addEventListener("change", () => { renderRanking(); buildRoute(); });
     $$(".tab-button").forEach(button => button.addEventListener("click", () => switchTab(button.dataset.tab)));
+    $("#summary-dimension").addEventListener("change", renderSummary); $("#summary-show-more").addEventListener("click", toggleSummaryRows);
     $("#ranking-metric").addEventListener("change", renderRanking); $("#ranking-prefecture").addEventListener("change", renderRanking); $("#ranking-search").addEventListener("input", renderRanking);
     $("#ranking-body").addEventListener("click", event => { const button = event.target.closest(".facility-link"); if (button) openFacility(button.dataset.pref, button.dataset.facility); });
     $("#ranking-dimension").addEventListener("change", () => { detailOptions($("#ranking-dimension"), $("#ranking-detail")); renderRanking(); }); $("#ranking-detail").addEventListener("change", renderRanking); $("#trend-metric").addEventListener("change", renderTrend);
@@ -668,6 +706,7 @@ dialog::backdrop { background: rgba(10,32,29,.54); backdrop-filter: blur(3px); }
       $("#start-date").min = state.manifest.min_date; $("#start-date").max = state.manifest.max_date; $("#end-date").min = state.manifest.min_date; $("#end-date").max = state.manifest.max_date; $("#start-date").value = state.manifest.min_date; $("#end-date").value = state.manifest.max_date;
       $("#coverage-label").textContent = `${formatDate(state.manifest.min_date)}〜${formatDate(state.manifest.max_date)}｜${numberFormat.format(state.manifest.response_count)}回答`; $("#updated-label").textContent = `集計更新 ${state.manifest.generated_at.slice(0, 10).replace(/-/g, "/")}`;
       $("#period-summary-label").textContent = `全期間 ${formatDate(state.manifest.min_date)}〜${formatDate(state.manifest.max_date)}`;
+      dimensionOptions($("#summary-dimension")); $("#summary-dimension").value = "purpose";
       dimensionOptions($("#ranking-dimension")); $("#ranking-dimension").value = "purpose"; detailOptions($("#ranking-dimension"), $("#ranking-detail"), "温泉や露天風呂");
       renderDataDialog(); setupEvents();
       addRouteCondition("age", "20代"); addRouteCondition("companion", "夫婦2人"); addRouteCondition("purpose", "ドライブ・ツーリング");
@@ -769,13 +808,14 @@ dialog::backdrop { background: rgba(10,32,29,.54); backdrop-filter: blur(3px); }
     </details>
 
     <nav class="tab-list" aria-label="分析メニュー">
-      <button class="tab-button is-active" type="button" data-tab="ranking"><svg class="tifo-icon" aria-hidden="true"><use href="#icon-ranking"></use></svg>ランキング</button>
+      <button class="tab-button is-active" type="button" data-tab="summary"><svg class="tifo-icon" aria-hidden="true"><use href="#icon-compare"></use></svg>サマリー</button>
+      <button class="tab-button" type="button" data-tab="ranking"><svg class="tifo-icon" aria-hidden="true"><use href="#icon-ranking"></use></svg>ランキング</button>
       <button class="tab-button" type="button" data-tab="trend"><svg class="tifo-icon" aria-hidden="true"><use href="#icon-trend"></use></svg>時系列</button>
       <button class="tab-button" type="button" data-tab="route"><svg class="tifo-icon" aria-hidden="true"><use href="#icon-route"></use></svg>モデルルート</button>
       <button class="tab-button" type="button" data-tab="facility"><svg class="tifo-icon" aria-hidden="true"><use href="#icon-facility"></use></svg>施設・エリア</button>
     </nav>
 
-    <section id="panel-ranking" class="tab-panel is-active" data-panel="ranking">
+    <section id="panel-ranking" class="tab-panel" data-panel="ranking" hidden>
       <div class="section-heading">
         <div class="heading-title"><span class="heading-icon"><svg class="tifo-icon is-large" aria-hidden="true"><use href="#icon-ranking"></use></svg></span><div><p class="section-kicker">FACILITY RANKING</p><h2>北陸3県ランキング</h2></div></div>
         <p>回答数だけでなく、NPS・満足度・属性との相性から比較できます。</p>
@@ -795,6 +835,21 @@ dialog::backdrop { background: rgba(10,32,29,.54); backdrop-filter: blur(3px); }
         </div>
         <div id="ranking-summary" class="inline-note"></div>
         <div class="table-scroll"><table class="data-table"><thead><tr><th>順位</th><th>施設・エリア</th><th>県</th><th>スコア</th><th>回答数</th></tr></thead><tbody id="ranking-body"></tbody></table></div>
+      </article>
+    </section>
+
+    <section id="panel-summary" class="tab-panel is-active" data-panel="summary">
+      <div class="section-heading">
+        <div class="heading-title"><span class="heading-icon"><svg class="tifo-icon is-large" aria-hidden="true"><use href="#icon-compare"></use></svg></span><div><p class="section-kicker">ATTRIBUTE SUMMARY</p><h2>属性構成サマリー</h2></div></div>
+        <p>属性ごとの構成比を、富山・石川・福井で横並びに比較します。</p>
+      </div>
+      <article class="panel-card">
+        <div class="card-heading split-heading">
+          <div><h3>3県の属性構成</h3><p>年代・宿泊数・世帯年収は小さい区分から、それ以外は割合の高い順に表示します。</p></div>
+          <label>表示する項目<select id="summary-dimension"></select></label>
+        </div>
+        <div id="summary-comparison-table" class="comparison-table"></div>
+        <div class="summary-toggle-wrap"><button id="summary-show-more" class="attribute-toggle" type="button" aria-expanded="false" hidden>さらに表示</button></div>
       </article>
     </section>
 
